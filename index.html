@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Date Plans</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Playfair+Display:ital,wght@0,600;1,600&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS (CDN) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <!-- Config & Styles -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        chocolate: '#5D4037',
+                        gold: '#D4AF37',
+                        beige: '#EFEBE9',
+                        cream: '#FDFBF9'
+                    },
+                    fontFamily: {
+                        sans: ['"Noto Sans JP"', 'sans-serif'],
+                        serif: ['"Playfair Display"', 'serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #FDFBF9;
+            -webkit-font-smoothing: antialiased;
+        }
+        /* 横スクロールバーを隠す */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        /* アニメーション */
+        .fade-in {
+            animation: fadeIn 0.5s ease-out forwards;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .heart-pop {
+            animation: pop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        @keyframes pop {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.3); }
+            100% { transform: scale(1); }
+        }
+        /* Modal Animation */
+        .modal-enter {
+            animation: modalSlideUp 0.3s ease-out forwards;
+        }
+        @keyframes modalSlideUp {
+            from { transform: translateY(100%); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+    </style>
+</head>
+<body class="text-chocolate pb-24 relative min-h-screen">
+
+    <!-- Hero Section -->
+    <header class="relative bg-chocolate text-beige pt-10 pb-16 px-6 rounded-b-[40px] shadow-2xl overflow-hidden">
+        <!-- Decoration -->
+        <div class="absolute top-0 right-0 w-48 h-48 bg-gold opacity-10 rounded-full -mr-16 -mt-16 blur-3xl"></div>
+        <div class="absolute top-20 left-0 w-24 h-24 bg-gold opacity-5 rounded-full -ml-10 blur-xl"></div>
+        
+        <div class="relative z-10 max-w-md mx-auto">
+            <div class="flex justify-between items-center mb-6">
+                <span class="bg-gold text-chocolate text-[10px] font-bold px-3 py-1 rounded-full tracking-widest uppercase shadow-sm">
+                    Premium Edition
+                </span>
+                <i data-lucide="heart" class="w-5 h-5 text-gold"></i>
+            </div>
+            
+            <h1 class="text-3xl font-serif font-bold mb-1 tracking-tight">Smart Date Plans</h1>
+            <p class="text-gold text-sm font-medium mb-8 opacity-90 italic tracking-wide">
+                Curated spots for special moments
+            </p>
+            
+            <!-- Today's Pick (Injected via JS) -->
+            <div id="todays-pick-container"></div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-md mx-auto px-5 -mt-8 relative z-20">
+        
+        <!-- Filter Tabs -->
+        <div class="flex overflow-x-auto gap-2 mb-6 no-scrollbar pb-2 mask-linear" id="category-container">
+            <!-- Tabs injected via JS -->
+        </div>
+
+        <!-- Sort & Count -->
+        <div class="flex justify-between items-center mb-4 px-1">
+            <p class="text-xs font-bold text-gray-400" id="plan-count">Loading...</p>
+            <div class="flex gap-2">
+                <button onclick="sortPlans('asc')" id="btn-sort-asc" class="flex items-center gap-1 text-[10px] font-bold uppercase tracking-widest px-2 py-1 rounded transition-colors text-gray-400 hover:text-chocolate">
+                    <i data-lucide="trending-up" class="w-3 h-3"></i> Cheap
+                </button>
+                <button onclick="sortPlans('desc')" id="btn-sort-desc" class="flex items-center gap-1 text-[10px] font-bold uppercase tracking-widest px-2 py-1 rounded transition-colors text-gray-400 hover:text-chocolate">
+                    <i data-lucide="trending-down" class="w-3 h-3"></i> Luxe
+                </button>
+            </div>
+        </div>
+
+        <!-- List Container -->
+        <div id="plans-container" class="space-y-4 min-h-[300px]">
+            <!-- Cards injected via JS -->
+        </div>
+
+    </main>
+
+    <!-- Footer Navigation (Sticky) -->
+    <nav class="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-xl border-t border-gray-200 px-6 py-3 flex justify-around items-center z-50 shadow-[0_-5px_20px_rgb(0,0,0,0.05)]">
+        <div class="flex flex-col items-center gap-1 opacity-100 cursor-pointer" onclick="window.scrollTo({top:0, behavior:'smooth'})">
+            <i data-lucide="home" class="text-chocolate w-6 h-6"></i>
+        </div>
+        <!-- Calendar (Not functional yet) -->
+        <div class="flex flex-col items-center gap-1 opacity-40 cursor-pointer" onclick="alert('カレンダー機能は今後のアップデートで実装予定です！📅')">
+            <i data-lucide="calendar" class="text-chocolate w-6 h-6"></i>
+        </div>
+        <!-- Center Button (Scroll Top) -->
+        <div class="bg-chocolate p-3.5 rounded-2xl -mt-8 shadow-xl border-4 border-cream active:scale-95 transition-transform cursor-pointer" onclick="window.scrollTo({top:0, behavior:'smooth'})">
+            <i data-lucide="sparkles" class="text-gold w-6 h-6 fill-gold"></i>
+        </div>
+        <div class="flex flex-col items-center gap-1 opacity-40">
+            <i data-lucide="heart" class="text-chocolate w-6 h-6"></i>
+        </div>
+        <div class="flex flex-col items-center gap-1 opacity-40">
+            <div class="w-6 h-6 rounded-full bg-gold border-2 border-chocolate"></div>
+        </div>
+    </nav>
+
+    <!-- Floating Action Button (Add Plan) -->
+    <button onclick="openModal()" class="fixed bottom-24 right-5 z-40 bg-gold text-chocolate p-4 rounded-full shadow-2xl border-2 border-white active:scale-90 transition-transform hover:bg-[#c4a030]">
+        <i data-lucide="plus" class="w-6 h-6"></i>
+    </button>
+
+    <!-- Add/Edit Plan Modal Overlay -->
+    <div id="add-modal" class="fixed inset-0 z-[60] hidden">
+        <!-- Backdrop -->
+        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="closeModal()"></div>
+        
+        <!-- Modal Content -->
+        <div class="absolute bottom-0 left-0 right-0 bg-white rounded-t-[30px] p-6 modal-enter max-w-md mx-auto h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-6">
+                <h2 id="modal-title" class="text-xl font-bold font-serif">New Date Plan</h2>
+                <button onclick="closeModal()" class="p-2 bg-gray-100 rounded-full text-gray-500">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <form id="plan-form" onsubmit="handleSavePlan(event)" class="space-y-5">
+                <input type="hidden" name="planId" id="planId">
+                
+                <!-- Name -->
+                <div>
+                    <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">店名・場所名 <span class="text-red-400">*</span></label>
+                    <input type="text" name="name" id="input-name" required placeholder="例: 六本木ヒルズ展望台" 
+                           class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-gold focus:ring-1 focus:ring-gold">
+                </div>
+
+                <!-- Category -->
+                <div>
+                    <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">いつ行く？</label>
+                    <select name="category" id="input-category" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-gold">
+                        <option value="夜ごはん">夜ごはん</option>
+                        <option value="休日昼">休日昼</option>
+                        <option value="遠出">遠出</option>
+                        <option value="お家">お家</option>
+                        <option value="季節限定">季節限定</option>
+                        <option value="お泊まり">お泊まり</option>
+                    </select>
+                </div>
+
+                <!-- Activity -->
+                <div>
+                    <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">何をする？ <span class="text-red-400">*</span></label>
+                    <input type="text" name="activity" id="input-activity" required placeholder="例: 東京タワーを見ながらディナー" 
+                           class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-gold focus:ring-1 focus:ring-gold">
+                </div>
+
+                <!-- Budget -->
+                <div>
+                    <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">予算 (2人分) <span class="text-red-400">*</span></label>
+                    <div class="relative">
+                        <span class="absolute left-4 top-3 text-gray-400 text-sm">¥</span>
+                        <input type="number" name="budget" id="input-budget" required placeholder="10000" 
+                               class="w-full bg-gray-50 border border-gray-200 rounded-xl pl-8 pr-4 py-3 text-sm focus:outline-none focus:border-gold focus:ring-1 focus:ring-gold">
+                    </div>
+                </div>
+
+                <!-- Why -->
+                <div>
+                    <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">沼らせポイント (Why) <span class="text-red-400">*</span></label>
+                    <textarea name="why" id="input-why" rows="2" required placeholder="例: 夜景がとにかく綺麗。記念日に最適。" 
+                              class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-gold focus:ring-1 focus:ring-gold"></textarea>
+                </div>
+
+                <!-- Memo (New) -->
+                <div>
+                    <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">メモ</label>
+                    <textarea name="memo" id="input-memo" rows="2" placeholder="例: 予約は2週間前から。窓際席を希望。" 
+                              class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-gold focus:ring-1 focus:ring-gold"></textarea>
+                </div>
+
+                <!-- Links (New) -->
+                <div>
+                    <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">関連リンク (URLを改行区切り)</label>
+                    <textarea name="links" id="input-links" rows="3" placeholder="https://tabelog.com/...&#10;https://instagram.com/..." 
+                              class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-gold focus:ring-1 focus:ring-gold font-mono text-xs"></textarea>
+                </div>
+
+                <!-- Chocolate Check -->
+                <div class="flex items-center gap-3 p-4 bg-[#3E2723]/5 rounded-xl border border-[#3E2723]/10">
+                    <input type="checkbox" id="input-isChoco" name="isChoco" class="w-5 h-5 text-chocolate rounded focus:ring-gold">
+                    <label for="input-isChoco" class="text-sm font-bold text-chocolate flex items-center gap-2 cursor-pointer">
+                        <i data-lucide="coffee" class="w-4 h-4"></i>
+                        チョコ・スイーツ関連ならチェック
+                    </label>
+                </div>
+
+                <!-- Submit Button -->
+                <div class="pt-4 pb-10">
+                    <button type="submit" id="submit-btn" class="w-full bg-chocolate text-gold font-bold py-4 rounded-xl shadow-lg active:scale-95 transition-transform flex items-center justify-center gap-2">
+                        <i data-lucide="save" class="w-5 h-5"></i>
+                        保存する
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- JavaScript Logic -->
+    <script>
+        // --- Data ---
+        let rawData = [
+            // A. 夜ごはん
+            { id: 1, name: "人形町「焼鳥 おが和」", activity: "カウンターで老舗の焼鳥重・焼鳥を食らう", budget: 10000, why: "予約困難な名店。連れて行くだけで「食通」認定。ヘルシーな鶏肉。", category: "夜ごはん", isChoco: false },
+            { id: 2, name: "日本橋「teal (ティール)」", activity: "元トップショコラティエのアイス＆チョコ", budget: 3000, why: "渋沢栄一邸宅跡地でおしゃれ。チョコ好きなら絶対に唸る味。", category: "夜ごはん", isChoco: true, links: ["https://tabelog.com/tokyo/A1302/A130203/13264993/"] },
+            { id: 3, name: "押上「遠藤利三郎商店」", activity: "予約必須のワインビストロで乾杯", budget: 15000, why: "「壁一面のワイン」が圧巻。押上の誇る名店。", category: "夜ごはん", isChoco: false },
+            { id: 4, name: "清澄白河「iki ESPRESSO」", activity: "夜カフェ（金土のみ夜営業あり要確認）", budget: 3000, why: "倉庫リノベ系。リコッタパンケーキはシェアなら罪悪感なし。", category: "夜ごはん", isChoco: false },
+            { id: 5, name: "錦糸町「黄金湯」", activity: "オシャレ銭湯でサウナ→ビアバー", budget: 4000, why: "クラフトビールが飲める番台バー。ととのった後のビールは悪魔的。", category: "夜ごはん", isChoco: false },
+            { id: 6, name: "門前仲町「魚三酒場」", activity: "行列のできる大衆居酒屋体験", budget: 5000, why: "「THE 下町」。魚が激安で激ウマ。B型女子の冒険心をくすぐる。", category: "夜ごはん", isChoco: false },
+            { id: 7, name: "人形町「BROZERS'」", activity: "日本一有名なグルメバーガー", budget: 4000, why: "赤い店内が可愛い。「今日はチートデイ！」と割り切って楽しむ。", category: "夜ごはん", isChoco: false },
+            { id: 8, name: "銀座「セントル ザ・ベーカリー」", activity: "高級食パンの食べ比べ", budget: 4000, why: "パン好き女子の聖地。自分でトースターを選んで焼く体験。", category: "夜ごはん", isChoco: false },
+            { id: 9, name: "日本橋「金子半之助」", activity: "揚げたて天ぷらめし", budget: 3000, why: "カウンターで一品ずつ提供。高級割烹のような満足感なのに安い。", category: "夜ごはん", isChoco: false },
+            { id: 10, name: "月島「近藤 本店」", activity: "もんじゃストリートの老舗で焼く", budget: 6000, why: "王道が一番美味い。店員さんの手さばきを見るのもエンタメ。", category: "夜ごはん", isChoco: false },
+            
+            // 追加分
+            { id: 51, name: "人形町「和献酒彩 橙凛」", activity: "隠れ家割烹で味わう朝締め鯛", budget: 15000, why: "沖縄出身の店主による温かいおもてなし。大人のしっぽりデートに。", category: "夜ごはん", isChoco: false },
+            { id: 52, name: "人形町「鳥波多」", activity: "希少部位の焼鳥と活気ある空間", budget: 12000, why: "「ソリ」「チョウチン」など希少部位が豊富。焼鳥好きなら必食。", category: "夜ごはん", isChoco: false },
+            { id: 53, name: "茅場町「TOKYO JUJU」", activity: "東京しゃも×ワインのペアリング", budget: 14000, why: "ジャズが流れるお洒落な店内。創作天ぷらとワインで乾杯。", category: "夜ごはん", isChoco: false },
+            { id: 54, name: "西麻布「Takumi」", activity: "食材解説から始まる体験型フレンチ", budget: 50000, why: "ミシュラン掲載。皿の上が芸術作品のような感動体験。", category: "夜ごはん", isChoco: false },
+            { id: 55, name: "麻布十番「羊SUNRISE」", activity: "「羊＝臭い」を覆す国産羊肉", budget: 25000, why: "羊飼いから直送の激レア国産羊。カウンターでのライブ感が最高。", category: "夜ごはん", isChoco: false },
+
+            // B. 休日昼
+            { id: 11, name: "蔵前「カキモリ」", activity: "表紙・中紙を選んでノート作り", budget: 6000, why: "「二人の思い出帳にしよう」と言える。クリエイティブ欲を満たす。", category: "休日昼", isChoco: false },
+            { id: 12, name: "蔵前「ダンデライオン・チョコレート」", activity: "カカオ香る工場カフェでスモア", budget: 3000, why: "【必勝】チョコ好きの聖地。製造工程を見ながら濃厚チョコを摂取。", category: "休日昼", isChoco: true, links: ["https://dandelionchocolate.jp/"] },
+            { id: 13, name: "押上「プラネタリウム天空」", activity: "「三日月シート」で寝転んで星を見る", budget: 5000, why: "限定3席のプレミアムシート。ほぼベッドの上で距離感ゼロ。", category: "休日昼", isChoco: false },
+            { id: 14, name: "中目黒「green bean to bar」", activity: "本格チョコのエクレアと試食体験", budget: 3000, why: "カカオ豆から作る本格派。パッケージもおしゃれで手土産にも最適。", category: "休日昼", isChoco: true },
+            { id: 15, name: "水道橋「スパ ラクーア」", activity: "「ヒーリング バーデ」で岩盤浴", budget: 7000, why: "南国リゾート風。デトックスしたい彼女に最適。", category: "休日昼", isChoco: false },
+            { id: 16, name: "豊洲「チームラボプラネッツ」", activity: "水に入るミュージアムで撮影会", budget: 8000, why: "膝まで水に浸かる非日常。暗がり＆鏡張りでドキドキする。", category: "休日昼", isChoco: false },
+            { id: 17, name: "清澄白河「東京都現代美術館」", activity: "現代アート鑑賞＆「二階のサンドイッチ」", budget: 5000, why: "難解なアートを見て「これ何に見える？笑」と大喜利。", category: "休日昼", isChoco: false },
+            { id: 18, name: "銀座「ヴェンキ (Venchi)」", activity: "高級チョコジェラート食べ歩き", budget: 2000, why: "壁一面のチョコディスプレイ。味の種類を選ぶだけで盛り上がる。", category: "休日昼", isChoco: true },
+            { id: 19, name: "両国「江戸遊」", activity: "デザイナーズ銭湯＆足湯会議", budget: 6000, why: "ワークスペースあり。お互いPC作業してからお風呂もアリ。", category: "休日昼", isChoco: false },
+            { id: 20, name: "日比谷「ミッドタウン日比谷」", activity: "映画→空中庭園で夜景", budget: 5000, why: "映画後の空中庭園散歩がロマンチックすぎてズルい。", category: "休日昼", isChoco: false },
+            // C. 遠出
+            { id: 21, name: "横浜「バニラビーンズ」", activity: "チョコ工房で利きチョコドリンク", budget: 4000, why: "みなとみらいのチョコ専門店。海を見ながら甘いひととき。", category: "遠出", isChoco: true },
+            { id: 22, name: "鎌倉「gram」", activity: "オーダーメイド指輪作り", budget: 5000, why: "目の前でカンカン叩いて作る。990円〜と激安だが特別感◎。", category: "遠出", isChoco: false },
+            { id: 23, name: "所沢「角川武蔵野ミュージアム」", activity: "本棚劇場でプロジェクションマッピング", budget: 4000, why: "圧巻の巨大本棚。知的でおしゃれな写真が撮れる。", category: "遠出", isChoco: false },
+            { id: 24, name: "千葉「マザー牧場」", activity: "「こぶたのレース」観戦＆ジンギスカン", budget: 12000, why: "動物と触れ合う。広大な花畑で開放的な気分に。", category: "遠出", isChoco: false },
+            { id: 25, name: "白金台「ショコラティエ・エリカ」", activity: "ミントチョコ＆マシュマロチョコ購入", budget: 5000, why: "チョコ好きなら知らなきゃ損な名店。優雅なカフェタイム。", category: "遠出", isChoco: true },
+            { id: 26, name: "横浜「万葉倶楽部」", activity: "屋上足湯から観覧車の夜景を見る", budget: 7000, why: "浴衣デート。足湯につかりながら見る夜景はムード満点。", category: "遠出", isChoco: false },
+            { id: 27, name: "川越「氷川神社」", activity: "「あい鯛みくじ」を釣る", budget: 3000, why: "縁結び最強スポット。着物を着て小江戸散歩。", category: "遠出", isChoco: false },
+            { id: 28, name: "江ノ島「アイランドスパ」", activity: "水着で入れるインフィニティプール", budget: 8000, why: "海と一体化するプール。夕日が沈む瞬間が最高。", category: "遠出", isChoco: false },
+            { id: 29, name: "木更津「三井アウトレット」", activity: "買い物＆「松戸富田製麺」", budget: 20000, why: "日本一のつけ麺＆買い物。ストレス発散デート。", category: "遠出", isChoco: false },
+            { id: 30, name: "高尾山「うかい鳥山」", activity: "離れの個室で囲炉裏焼き料理", budget: 15000, why: "山奥の合掌造り集落。異世界のような雰囲気で記念日に最適。", category: "遠出", isChoco: false },
+            // D. お家
+            { id: 31, name: "ボドゲ「ブロックス」", activity: "陣取りゲーム", budget: 3000, why: "ルール簡単・奥が深い。B型の負けず嫌いが発動する。", category: "お家", isChoco: false },
+            { id: 32, name: "ボドゲ「ito (イト)」", activity: "価値観のズレを楽しむ会話ゲーム", budget: 2000, why: "「人気のデートスポットといえば？」等を数字で表現。", category: "お家", isChoco: false },
+            { id: 33, name: "Switch「桃太郎電鉄」", activity: "99年設定で終わらない旅", budget: 6000, why: "性格が出る。「ボンビーなすりつけ」で喧嘩しないよう注意。", category: "お家", isChoco: false },
+            { id: 34, name: "映画「アバウト・タイム」", activity: "Netflix等で鑑賞", budget: 0, why: "カップルで見ると「今を大切にしよう」と思える最高傑作。", category: "お家", isChoco: false },
+            { id: 35, name: "料理「手巻き寿司パ」", activity: "好きな具材を買って巻く", budget: 4000, why: "アボカドやローストビーフなど変わり種を用意。", category: "お家", isChoco: false },
+            { id: 36, name: "お酒「ご当地缶詰バーごっこ」", activity: "高級缶詰とお酒を並べる", budget: 3000, why: "「缶つま」シリーズなどを買い込んで、少しずつ食べる。", category: "お家", isChoco: false },
+            { id: 37, name: "DIY「ラブリコ」で棚作り", activity: "賃貸でもできる柱を立てる", budget: 5000, why: "共同作業。「ここに植物置こうよ」と未来の話ができる。", category: "お家", isChoco: false },
+            { id: 38, name: "ゲーム「オーバークック2」", activity: "協力料理アクション", budget: 3000, why: "2人で息を合わせないとクリア不可。ハイタッチ自然発生。", category: "お家", isChoco: false },
+            { id: 39, name: "高級チョコ「食べ比べ」", activity: "ピエールマルコリーニ等を数種買う", budget: 5000, why: "「これベリーっぽい」「こっちはナッツ」と食レポごっこ。", category: "お家", isChoco: true },
+            { id: 40, name: "癒やし「蒸気でアイマスク」", activity: "お互いにつけて10分無言で寝る", budget: 1000, why: "「何も見えない状態」で手を繋ぐと、感覚が研ぎ澄まされる。", category: "お家", isChoco: false },
+            // E. 季節限定
+            { id: 41, name: "横浜赤レンガ「ストロベリーフェス」", activity: "いちご＆チョコスイーツ", budget: 4000, why: "2月開催。チョコといちごの組み合わせは最強。", category: "季節限定", isChoco: true },
+            { id: 42, name: "日本橋三越「スイーツコレクション」", activity: "バレンタイン催事巡り", budget: 5000, why: "世界中のチョコを試食。「自分たち用」を選ぶ。", category: "季節限定", isChoco: true },
+            { id: 43, name: "湯島天神「梅まつり」", activity: "早春の花見＆合格祈願", budget: 500, why: "桜より混んでおらず、香りが良い。屋台も出る。", category: "季節限定", isChoco: false },
+            { id: 44, name: "伊豆「河津桜」", activity: "一足早い満開の桜並木", budget: 20000, why: "2月が見頃。ピンクが濃くて写真映えする。", category: "季節限定", isChoco: false },
+            { id: 45, name: "丸の内「ラ・メゾン・デュ・ショコラ」", activity: "濃厚ホットチョコレート", budget: 4000, why: "飲むだけで貴族気分。冬の寒さがスパイスになる。", category: "季節限定", isChoco: true },
+            // F. お泊まり
+            { id: 46, name: "箱根「天翠茶寮」", activity: "足湯バー＆貸切露天風呂", budget: 60000, why: "ウェルカムドリンクからおしゃれ。「お姫様扱い」の極み。", category: "お泊まり", isChoco: false },
+            { id: 47, name: "日本橋「浜町ホテル」", activity: "緑あふれる部屋で都会の隠れ家ステイ", budget: 20000, why: "東東京エリアで泊まるならここ。コスパよく洗練された空間。", category: "お泊まり", isChoco: false },
+            { id: 48, name: "舞浜「ホテルミラコスタ」", activity: "部屋からパークを見る（予約困難）", budget: 100000, why: "最強のカード。記念日に取れたら一生崇められる。", category: "お泊まり", isChoco: false },
+            { id: 49, name: "横浜「ホテルニューグランド」", activity: "クラシックホテルで歴史に浸る", budget: 40000, why: "マッカーサーも泊まった宿。重厚感がすごい。", category: "お泊まり", isChoco: false },
+            { id: 50, name: "ふふ河口湖", activity: "森の中で富士山を独り占め", budget: 100000, why: "最高級の癒やし。バイオエタノール暖炉が全部屋にある。", category: "お泊まり", isChoco: false },
+        ];
+
+        // --- State ---
+        let currentState = {
+            filter: 'すべて',
+            sort: 'none',
+            likes: new Set()
+        };
+
+        const categories = ['すべて', '夜ごはん', '休日昼', '遠出', 'お家', '季節限定', 'お泊まり'];
+
+        // --- Init ---
+        document.addEventListener('DOMContentLoaded', () => {
+            initHero();
+            renderCategories();
+            renderPlans();
+            lucide.createIcons();
+        });
+
+        // --- Functions ---
+        
+        // 1. Hero Section Random Pick
+        function initHero() {
+            if (rawData.length === 0) return;
+            const random = rawData[Math.floor(Math.random() * rawData.length)];
+            const heroContainer = document.getElementById('todays-pick-container');
+            
+            heroContainer.innerHTML = `
+                <div class="bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/20 shadow-lg relative overflow-hidden group cursor-pointer hover:bg-white/20 transition-all">
+                    <div class="absolute -right-4 -top-4 bg-gold w-12 h-12 rotate-45 opacity-20 group-hover:opacity-40 transition-opacity"></div>
+                    <div class="flex items-center gap-2 mb-2 text-gold">
+                        <i data-lucide="sparkles" class="w-4 h-4 text-gold fill-gold"></i>
+                        <span class="text-xs font-bold uppercase tracking-wider">Today's Pick</span>
+                    </div>
+                    <h3 class="text-lg font-bold leading-tight mb-1 text-white">${random.name}</h3>
+                    <p class="text-xs text-gray-200 line-clamp-1 mb-2">${random.activity}</p>
+                    <div class="flex items-center gap-2 mt-2">
+                         ${random.isChoco ? `
+                            <span class="text-[10px] bg-[#3E2723] text-gold px-2 py-0.5 rounded-full border border-gold/30">
+                               🍫 Choco Plan
+                            </span>
+                         ` : ''}
+                         <span class="text-[10px] text-gray-300 bg-black/20 px-2 py-0.5 rounded-full">
+                            ¥${random.budget.toLocaleString()}
+                         </span>
+                    </div>
+                </div>
+            `;
+        }
+
+        // 2. Render Category Tabs
+        function renderCategories() {
+            const container = document.getElementById('category-container');
+            container.innerHTML = categories.map(cat => `
+                <button
+                    onclick="setFilter('${cat}')"
+                    class="whitespace-nowrap px-4 py-2.5 rounded-full text-xs font-bold transition-all duration-300 border
+                    ${currentState.filter === cat 
+                        ? 'bg-chocolate text-gold border-chocolate shadow-lg scale-105' 
+                        : 'bg-white text-chocolate border-chocolate/10 hover:bg-gray-50'}"
+                >
+                    ${cat}
+                </button>
+            `).join('');
+        }
+
+        // 3. Render Plans List (Updated: Compact & Editable & Links/Memo)
+        function renderPlans() {
+            let filtered = rawData.filter(item => 
+                currentState.filter === 'すべて' ? true : item.category === currentState.filter
+            );
+
+            if (currentState.sort === 'asc') {
+                filtered.sort((a, b) => a.budget - b.budget);
+            } else if (currentState.sort === 'desc') {
+                filtered.sort((a, b) => b.budget - a.budget);
+            }
+
+            document.getElementById('plan-count').innerText = `${filtered.length} Plans Found`;
+
+            const container = document.getElementById('plans-container');
+            
+            if(filtered.length === 0) {
+                container.innerHTML = `<div class="text-center py-20 text-gray-400 text-sm">No plans found...</div>`;
+                return;
+            }
+
+            container.innerHTML = filtered.map((plan, index) => {
+                const isLiked = currentState.likes.has(plan.id);
+                const delay = Math.min(index * 0.05, 0.5); 
+                
+                // Links rendering
+                const linkList = plan.links && plan.links.length > 0 
+                    ? `<div class="mt-3 flex flex-wrap gap-2">
+                        ${plan.links.map(url => `
+                            <a href="${url}" target="_blank" class="inline-flex items-center gap-1 bg-gray-100 hover:bg-gray-200 text-gray-600 px-2 py-1 rounded text-[10px] transition-colors">
+                                <i data-lucide="link" class="w-3 h-3"></i> リンク
+                            </a>
+                        `).join('')}
+                       </div>`
+                    : '';
+
+                // Memo rendering
+                const memoBlock = plan.memo 
+                    ? `<div class="mt-2 text-xs text-gray-500 bg-gray-50 p-2 rounded-lg border border-gray-100">
+                         <span class="font-bold text-[10px] text-gray-400 block mb-0.5">MEMO</span>
+                         ${plan.memo.replace(/\n/g, '<br>')}
+                       </div>` 
+                    : '';
+
+                // Compact Card
+                return `
+                <div class="fade-in bg-white rounded-2xl overflow-hidden shadow-sm border border-chocolate/5 group transition-all duration-300 relative p-5" style="animation-delay: ${delay}s">
+                    
+                    <!-- Header: Category & Actions -->
+                    <div class="flex justify-between items-start mb-2">
+                        <div class="flex items-center gap-2">
+                            <span class="bg-gray-100 text-gray-600 px-2 py-1 rounded-md text-[10px] font-bold border border-gray-200">
+                                ${plan.category}
+                            </span>
+                            ${plan.isChoco ? `
+                            <span class="bg-[#3E2723] text-gold px-2 py-1 rounded-full text-[10px] font-bold flex items-center gap-1">
+                                🍫 CHOCO
+                            </span>
+                            ` : ''}
+                        </div>
+                        
+                        <!-- Actions Menu (Edit/Delete) -->
+                        <div class="flex items-center gap-1 opacity-60 group-hover:opacity-100 transition-opacity">
+                            <button onclick="openModal(${plan.id})" class="p-1.5 hover:bg-gray-100 rounded-full text-gray-400 hover:text-chocolate transition-colors">
+                                <i data-lucide="pencil" class="w-3.5 h-3.5"></i>
+                            </button>
+                            <button onclick="deletePlan(${plan.id})" class="p-1.5 hover:bg-red-50 rounded-full text-gray-400 hover:text-red-500 transition-colors">
+                                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Main Info -->
+                    <h3 class="text-lg font-bold leading-tight text-chocolate mb-1 pr-8">${plan.name}</h3>
+                    
+                    <div class="flex flex-wrap items-center gap-y-1 gap-x-3 text-sm text-gray-500 mb-3">
+                         <div class="flex items-center gap-1.5">
+                            <i data-lucide="map-pin" class="w-3.5 h-3.5 text-gold shrink-0"></i>
+                            <span class="text-xs leading-snug">${plan.activity}</span>
+                        </div>
+                        <div class="flex items-center gap-1">
+                            <i data-lucide="wallet" class="w-3.5 h-3.5 text-gold shrink-0"></i>
+                            <span class="text-xs font-bold font-mono text-chocolate">¥${plan.budget.toLocaleString()}</span>
+                        </div>
+                    </div>
+
+                    <!-- Footer: Why & Like -->
+                    <div class="flex items-end justify-between gap-3 pt-3 border-t border-dashed border-gray-100">
+                        <div class="flex-1">
+                            <!-- Why Block -->
+                            <div class="bg-[#FAF7F2] rounded-lg p-2.5 relative">
+                               <div class="absolute -top-1.5 left-2 bg-gold text-white text-[8px] font-bold px-1.5 rounded uppercase tracking-wider">
+                                  Why
+                               </div>
+                               <p class="text-xs text-chocolate leading-relaxed font-medium mt-1">
+                                "${plan.why}"
+                              </p>
+                            </div>
+
+                            <!-- New Sections: Memo & Links -->
+                            ${memoBlock}
+                            ${linkList}
+                        </div>
+
+                        <button 
+                            onclick="toggleLike(${plan.id})"
+                            id="like-btn-${plan.id}"
+                            class="p-2.5 rounded-full transition-all duration-300 shrink-0 self-end ${isLiked ? 'bg-red-50 text-red-500' : 'bg-gray-50 text-gray-300 hover:bg-gray-100'}"
+                        >
+                            <i data-lucide="heart" class="w-5 h-5 ${isLiked ? 'fill-current' : ''}"></i>
+                        </button>
+                    </div>
+                </div>
+                `;
+            }).join('');
+
+            lucide.createIcons();
+            updateSortButtons();
+        }
+
+        // 4. Interaction Functions
+        function setFilter(cat) {
+            currentState.filter = cat;
+            renderCategories();
+            renderPlans();
+        }
+
+        function sortPlans(type) {
+            if (currentState.sort === type) {
+                currentState.sort = 'none';
+            } else {
+                currentState.sort = type;
+            }
+            renderPlans();
+        }
+
+        function updateSortButtons() {
+            const ascBtn = document.getElementById('btn-sort-asc');
+            const descBtn = document.getElementById('btn-sort-desc');
+            const baseClass = "flex items-center gap-1 text-[10px] font-bold uppercase tracking-widest px-2 py-1 rounded transition-colors";
+            const inactiveClass = "text-gray-400 hover:text-chocolate";
+            const activeClass = "bg-gold/20 text-chocolate";
+
+            ascBtn.className = `${baseClass} ${currentState.sort === 'asc' ? activeClass : inactiveClass}`;
+            descBtn.className = `${baseClass} ${currentState.sort === 'desc' ? activeClass : inactiveClass}`;
+        }
+
+        function toggleLike(id) {
+            const btn = document.getElementById(`like-btn-${id}`);
+            const icon = btn.querySelector('svg');
+            
+            if (currentState.likes.has(id)) {
+                currentState.likes.delete(id);
+                btn.classList.remove('bg-red-50', 'text-red-500');
+                btn.classList.add('bg-gray-50', 'text-gray-300');
+                icon.setAttribute('fill', 'none');
+            } else {
+                currentState.likes.add(id);
+                btn.classList.remove('bg-gray-50', 'text-gray-300');
+                btn.classList.add('bg-red-50', 'text-red-500', 'heart-pop');
+                icon.setAttribute('fill', 'currentColor');
+                setTimeout(() => btn.classList.remove('heart-pop'), 300);
+            }
+        }
+
+        // --- CRUD Logic (Add / Edit / Delete) ---
+
+        // Delete Plan
+        function deletePlan(id) {
+            if(confirm("このプランを削除してもよろしいですか？")) {
+                rawData = rawData.filter(p => p.id !== id);
+                // Also remove from likes if exists
+                if(currentState.likes.has(id)) {
+                    currentState.likes.delete(id);
+                }
+                renderPlans();
+            }
+        }
+
+        // Open Modal (for Add or Edit)
+        function openModal(planId = null) {
+            const modal = document.getElementById('add-modal');
+            const form = document.getElementById('plan-form');
+            const title = document.getElementById('modal-title');
+            const submitBtn = document.getElementById('submit-btn');
+
+            // Reset form first
+            form.reset();
+
+            if (planId) {
+                // Edit Mode
+                const plan = rawData.find(p => p.id === planId);
+                if (plan) {
+                    document.getElementById('planId').value = plan.id;
+                    document.getElementById('input-name').value = plan.name;
+                    document.getElementById('input-category').value = plan.category;
+                    document.getElementById('input-activity').value = plan.activity;
+                    document.getElementById('input-budget').value = plan.budget;
+                    document.getElementById('input-why').value = plan.why;
+                    // New Fields
+                    document.getElementById('input-memo').value = plan.memo || '';
+                    document.getElementById('input-links').value = (plan.links || []).join('\n');
+                    
+                    document.getElementById('input-isChoco').checked = plan.isChoco;
+
+                    title.innerText = "Edit Date Plan";
+                    submitBtn.innerHTML = '<i data-lucide="save" class="w-5 h-5"></i> 更新する';
+                }
+            } else {
+                // Add Mode
+                document.getElementById('planId').value = "";
+                title.innerText = "New Date Plan";
+                submitBtn.innerHTML = '<i data-lucide="plus-circle" class="w-5 h-5"></i> リストに追加する';
+            }
+
+            modal.classList.remove('hidden');
+            lucide.createIcons();
+        }
+
+        function closeModal() {
+            document.getElementById('add-modal').classList.add('hidden');
+        }
+
+        function handleSavePlan(e) {
+            e.preventDefault();
+            const form = e.target;
+            const formData = new FormData(form);
+            const planId = formData.get('planId'); // string
+
+            // New fields processing
+            const linksText = formData.get('links');
+            const linksArray = linksText ? linksText.split('\n').map(l => l.trim()).filter(l => l !== '') : [];
+
+            const planData = {
+                name: formData.get('name'),
+                category: formData.get('category'),
+                activity: formData.get('activity'),
+                budget: parseInt(formData.get('budget')),
+                why: formData.get('why'),
+                isChoco: formData.get('isChoco') === 'on',
+                // New Fields
+                memo: formData.get('memo'),
+                links: linksArray
+            };
+
+            if (planId) {
+                // Update existing
+                const index = rawData.findIndex(p => p.id === parseInt(planId));
+                if (index !== -1) {
+                    rawData[index] = { ...rawData[index], ...planData };
+                }
+            } else {
+                // Add new
+                const newPlan = {
+                    id: Date.now(),
+                    ...planData
+                };
+                rawData.unshift(newPlan);
+                // Show all to see the new item
+                currentState.filter = 'すべて';
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+
+            renderCategories(); // In case categories changed/added logic needed (future proof)
+            renderPlans();
+            closeModal();
+        }
+
+    </script>
+</body>
+</html>
