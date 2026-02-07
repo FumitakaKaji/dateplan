@@ -129,24 +129,20 @@
     </main>
 
     <!-- Footer Navigation (Sticky) -->
-    <nav class="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-xl border-t border-gray-200 px-6 py-3 flex justify-around items-center z-50 shadow-[0_-5px_20px_rgb(0,0,0,0.05)]">
-        <div class="flex flex-col items-center gap-1 opacity-100 cursor-pointer" onclick="window.scrollTo({top:0, behavior:'smooth'})">
-            <i data-lucide="home" class="text-chocolate w-6 h-6"></i>
-        </div>
-        <!-- Calendar (Not functional yet) -->
-        <div class="flex flex-col items-center gap-1 opacity-40 cursor-pointer" onclick="alert('カレンダー機能は今後のアップデートで実装予定です！📅')">
-            <i data-lucide="calendar" class="text-chocolate w-6 h-6"></i>
-        </div>
-        <!-- Center Button (Scroll Top) -->
-        <div class="bg-chocolate p-3.5 rounded-2xl -mt-8 shadow-xl border-4 border-cream active:scale-95 transition-transform cursor-pointer" onclick="window.scrollTo({top:0, behavior:'smooth'})">
-            <i data-lucide="sparkles" class="text-gold w-6 h-6 fill-gold"></i>
-        </div>
-        <div class="flex flex-col items-center gap-1 opacity-40">
-            <i data-lucide="heart" class="text-chocolate w-6 h-6"></i>
-        </div>
-        <div class="flex flex-col items-center gap-1 opacity-40">
-            <div class="w-6 h-6 rounded-full bg-gold border-2 border-chocolate"></div>
-        </div>
+    <nav class="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-xl border-t border-gray-200 px-6 py-2 flex justify-center items-center gap-16 z-50 shadow-[0_-5px_20px_rgb(0,0,0,0.05)]">
+        
+        <!-- Home Tab -->
+        <button onclick="switchTab('home')" id="nav-home" class="flex flex-col items-center gap-1 p-2 transition-all text-chocolate">
+            <i data-lucide="home" class="w-6 h-6"></i>
+            <span class="text-[10px] font-bold tracking-wide">Home</span>
+        </button>
+
+        <!-- Favorites Tab -->
+        <button onclick="switchTab('favorites')" id="nav-favorites" class="flex flex-col items-center gap-1 p-2 transition-all text-gray-300 hover:text-chocolate">
+            <i data-lucide="heart" class="w-6 h-6"></i>
+            <span class="text-[10px] font-bold tracking-wide">Favorites</span>
+        </button>
+
     </nav>
 
     <!-- Floating Action Button (Add Plan) -->
@@ -215,14 +211,14 @@
                               class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-gold focus:ring-1 focus:ring-gold"></textarea>
                 </div>
 
-                <!-- Memo (New) -->
+                <!-- Memo -->
                 <div>
                     <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">メモ</label>
                     <textarea name="memo" id="input-memo" rows="2" placeholder="例: 予約は2週間前から。窓際席を希望。" 
                               class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-gold focus:ring-1 focus:ring-gold"></textarea>
                 </div>
 
-                <!-- Links (New) -->
+                <!-- Links -->
                 <div>
                     <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">関連リンク (URLを改行区切り)</label>
                     <textarea name="links" id="input-links" rows="3" placeholder="https://tabelog.com/...&#10;https://instagram.com/..." 
@@ -323,6 +319,7 @@
         let currentState = {
             filter: 'すべて',
             sort: 'none',
+            viewMode: 'home', // 'home' or 'favorites'
             likes: new Set()
         };
 
@@ -334,6 +331,7 @@
             renderCategories();
             renderPlans();
             lucide.createIcons();
+            updateTabStyles();
         });
 
         // --- Functions ---
@@ -370,6 +368,8 @@
         // 2. Render Category Tabs
         function renderCategories() {
             const container = document.getElementById('category-container');
+            // Favoritesモードのときはカテゴリタブを非表示または無効化してもいいが、
+            // 今回はシンプルにフィルタとして機能させる
             container.innerHTML = categories.map(cat => `
                 <button
                     onclick="setFilter('${cat}')"
@@ -383,24 +383,45 @@
             `).join('');
         }
 
-        // 3. Render Plans List (Updated: Compact & Editable & Links/Memo)
+        // 3. Render Plans List
         function renderPlans() {
-            let filtered = rawData.filter(item => 
-                currentState.filter === 'すべて' ? true : item.category === currentState.filter
-            );
+            let filtered = rawData;
 
+            // Step 1: Filter by View Mode (Home vs Favorites)
+            if (currentState.viewMode === 'favorites') {
+                filtered = filtered.filter(item => currentState.likes.has(item.id));
+            }
+
+            // Step 2: Filter by Category
+            if (currentState.filter !== 'すべて') {
+                filtered = filtered.filter(item => item.category === currentState.filter);
+            }
+
+            // Step 3: Sort
             if (currentState.sort === 'asc') {
                 filtered.sort((a, b) => a.budget - b.budget);
             } else if (currentState.sort === 'desc') {
                 filtered.sort((a, b) => b.budget - a.budget);
             }
 
-            document.getElementById('plan-count').innerText = `${filtered.length} Plans Found`;
+            // Update Counts and Title
+            const countLabel = currentState.viewMode === 'favorites' ? 'Favorite Plans' : 'Plans Found';
+            document.getElementById('plan-count').innerText = `${filtered.length} ${countLabel}`;
 
             const container = document.getElementById('plans-container');
             
+            // Empty State
             if(filtered.length === 0) {
-                container.innerHTML = `<div class="text-center py-20 text-gray-400 text-sm">No plans found...</div>`;
+                if(currentState.viewMode === 'favorites') {
+                    container.innerHTML = `
+                        <div class="text-center py-20 text-gray-400">
+                            <i data-lucide="heart-off" class="w-12 h-12 mx-auto mb-3 opacity-20"></i>
+                            <p class="text-sm">まだお気に入りがありません。<br>気になるプランに♡を押してみてね！</p>
+                        </div>`;
+                } else {
+                    container.innerHTML = `<div class="text-center py-20 text-gray-400 text-sm">No plans found...</div>`;
+                }
+                lucide.createIcons();
                 return;
             }
 
@@ -482,7 +503,6 @@
                               </p>
                             </div>
 
-                            <!-- New Sections: Memo & Links -->
                             ${memoBlock}
                             ${linkList}
                         </div>
@@ -536,6 +556,12 @@
             
             if (currentState.likes.has(id)) {
                 currentState.likes.delete(id);
+                // If we are in favorites view, re-render to remove it from list immediately
+                if(currentState.viewMode === 'favorites') {
+                    renderPlans();
+                    return;
+                }
+                // Normal toggle visual
                 btn.classList.remove('bg-red-50', 'text-red-500');
                 btn.classList.add('bg-gray-50', 'text-gray-300');
                 icon.setAttribute('fill', 'none');
@@ -548,13 +574,53 @@
             }
         }
 
+        // --- Nav Switching ---
+        function switchTab(mode) {
+            currentState.viewMode = mode;
+            // Scroll to top when switching
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            
+            updateTabStyles();
+            renderPlans();
+        }
+
+        function updateTabStyles() {
+            const homeBtn = document.getElementById('nav-home');
+            const favBtn = document.getElementById('nav-favorites');
+            
+            const activeClasses = ['text-chocolate', 'scale-105'];
+            const inactiveClasses = ['text-gray-300', 'hover:text-chocolate'];
+
+            if (currentState.viewMode === 'home') {
+                homeBtn.classList.remove(...inactiveClasses);
+                homeBtn.classList.add(...activeClasses);
+                homeBtn.querySelector('span').classList.remove('font-normal');
+                homeBtn.querySelector('span').classList.add('font-bold');
+
+                favBtn.classList.add(...inactiveClasses);
+                favBtn.classList.remove(...activeClasses);
+                favBtn.querySelector('span').classList.add('font-normal');
+                favBtn.querySelector('span').classList.remove('font-bold');
+            } else {
+                favBtn.classList.remove(...inactiveClasses);
+                favBtn.classList.add(...activeClasses);
+                favBtn.querySelector('span').classList.remove('font-normal');
+                favBtn.querySelector('span').classList.add('font-bold');
+
+                homeBtn.classList.add(...inactiveClasses);
+                homeBtn.classList.remove(...activeClasses);
+                homeBtn.querySelector('span').classList.add('font-normal');
+                homeBtn.querySelector('span').classList.remove('font-bold');
+            }
+        }
+
+
         // --- CRUD Logic (Add / Edit / Delete) ---
 
         // Delete Plan
         function deletePlan(id) {
             if(confirm("このプランを削除してもよろしいですか？")) {
                 rawData = rawData.filter(p => p.id !== id);
-                // Also remove from likes if exists
                 if(currentState.likes.has(id)) {
                     currentState.likes.delete(id);
                 }
@@ -562,14 +628,13 @@
             }
         }
 
-        // Open Modal (for Add or Edit)
+        // Open Modal
         function openModal(planId = null) {
             const modal = document.getElementById('add-modal');
             const form = document.getElementById('plan-form');
             const title = document.getElementById('modal-title');
             const submitBtn = document.getElementById('submit-btn');
 
-            // Reset form first
             form.reset();
 
             if (planId) {
@@ -582,10 +647,8 @@
                     document.getElementById('input-activity').value = plan.activity;
                     document.getElementById('input-budget').value = plan.budget;
                     document.getElementById('input-why').value = plan.why;
-                    // New Fields
                     document.getElementById('input-memo').value = plan.memo || '';
                     document.getElementById('input-links').value = (plan.links || []).join('\n');
-                    
                     document.getElementById('input-isChoco').checked = plan.isChoco;
 
                     title.innerText = "Edit Date Plan";
@@ -610,9 +673,8 @@
             e.preventDefault();
             const form = e.target;
             const formData = new FormData(form);
-            const planId = formData.get('planId'); // string
+            const planId = formData.get('planId');
 
-            // New fields processing
             const linksText = formData.get('links');
             const linksArray = linksText ? linksText.split('\n').map(l => l.trim()).filter(l => l !== '') : [];
 
@@ -623,30 +685,29 @@
                 budget: parseInt(formData.get('budget')),
                 why: formData.get('why'),
                 isChoco: formData.get('isChoco') === 'on',
-                // New Fields
                 memo: formData.get('memo'),
                 links: linksArray
             };
 
             if (planId) {
-                // Update existing
                 const index = rawData.findIndex(p => p.id === parseInt(planId));
                 if (index !== -1) {
                     rawData[index] = { ...rawData[index], ...planData };
                 }
             } else {
-                // Add new
                 const newPlan = {
                     id: Date.now(),
                     ...planData
                 };
                 rawData.unshift(newPlan);
-                // Show all to see the new item
+                // 登録後はホームに戻って全表示
                 currentState.filter = 'すべて';
+                currentState.viewMode = 'home';
+                switchTab('home'); // update styles
                 window.scrollTo({ top: 0, behavior: 'smooth' });
             }
 
-            renderCategories(); // In case categories changed/added logic needed (future proof)
+            renderCategories();
             renderPlans();
             closeModal();
         }
