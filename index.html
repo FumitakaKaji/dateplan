@@ -158,11 +158,14 @@
         <i class="fa-solid fa-plus"></i>
     </button>
 
-    <!-- Bulk Action Panel (一括削除) -->
-    <div id="bulk-action-panel" class="fixed bottom-20 left-1/2 transform -translate-x-1/2 bg-red-600 text-white px-6 py-3 rounded-full shadow-lg flex items-center gap-4 z-50 transition-all duration-300 translate-y-24 opacity-0 pointer-events-none">
-        <span id="bulk-action-count" class="font-bold text-sm whitespace-nowrap">0件選択中</span>
-        <button onclick="deleteSelectedPlans()" class="bg-white text-red-600 px-3 py-1.5 rounded font-bold text-xs hover:bg-gray-100 transition-colors whitespace-nowrap">一括削除</button>
-        <button onclick="clearSelection()" class="text-white hover:text-red-200"><i class="fa-solid fa-xmark"></i></button>
+    <!-- Bulk Action Panel (一括操作) -->
+    <div id="bulk-action-panel" class="fixed bottom-20 left-1/2 transform -translate-x-1/2 bg-gray-800 border border-gray-700 text-white px-5 py-2.5 rounded-full shadow-[0_10px_40px_rgba(0,0,0,0.5)] flex items-center gap-3 z-50 transition-all duration-300 translate-y-24 opacity-0 pointer-events-none">
+        <span id="bulk-action-count" class="font-bold text-sm whitespace-nowrap text-brand-accent ml-1">0件</span>
+        <div class="w-px h-5 bg-gray-600 mx-1"></div>
+        <button onclick="deleteSelectedPlans()" class="text-red-400 hover:text-red-300 bg-red-900/30 hover:bg-red-900/50 px-3 py-1.5 rounded text-xs font-bold transition-colors whitespace-nowrap flex items-center gap-1.5">
+            <i class="fa-solid fa-trash-can"></i> 削除
+        </button>
+        <button onclick="clearSelection()" class="text-gray-400 hover:text-gray-200 ml-1 p-1"><i class="fa-solid fa-xmark"></i></button>
     </div>
 
     <!-- ================= MODALS ================= -->
@@ -274,17 +277,30 @@
                 </div>
             </div>
 
-            <!-- Import Data -->
+            <!-- Import/Export Data -->
             <div class="mb-8">
-                 <label class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 block">データの一括登録</label>
+                 <label class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 block">データの入出力 (JSON)</label>
                  <p class="text-[10px] text-gray-400 mb-2">AIで生成したJSONデータを貼り付けて追加できます。</p>
-                 <textarea id="import-json-input" rows="4" class="w-full bg-black border border-gray-700 rounded-lg px-3 py-2 text-xs text-white font-mono placeholder-gray-600 outline-none focus:border-brand-accent mb-2" placeholder='[{"name": "...", "category": "夜ごはん", "budget": 10000}]'></textarea>
-                 <button onclick="importJsonData()" class="w-full bg-gray-700 text-gray-300 py-3 rounded-xl hover:bg-gray-600 text-sm font-bold flex items-center justify-center gap-2 transition-colors">
-                    <i class="fa-solid fa-file-import"></i> 貼り付けたデータを取り込む
+                 <textarea id="import-json-input" rows="3" class="w-full bg-black border border-gray-700 rounded-lg px-3 py-2 text-xs text-white font-mono placeholder-gray-600 outline-none focus:border-brand-accent mb-2" placeholder='[{"name": "...", "category": "夜ごはん", "budget": 10000}]'></textarea>
+                 <div class="flex gap-2">
+                     <button onclick="importJsonData()" class="flex-1 bg-gray-700 text-gray-300 py-3 rounded-xl hover:bg-gray-600 text-xs font-bold flex items-center justify-center gap-2 transition-colors">
+                        <i class="fa-solid fa-file-import"></i> 登録する
+                     </button>
+                     <button onclick="exportAllPlans()" class="flex-1 bg-gray-700 text-gray-300 py-3 rounded-xl hover:bg-gray-600 text-xs font-bold flex items-center justify-center gap-2 transition-colors">
+                        <i class="fa-solid fa-file-export"></i> 全てコピー
+                     </button>
+                 </div>
+            </div>
+
+            <!-- Danger Zone -->
+            <div class="mb-8 p-4 bg-red-900/10 rounded-xl border border-red-900/30">
+                 <label class="text-xs font-bold text-red-500 uppercase tracking-wider mb-2 block"><i class="fa-solid fa-triangle-exclamation"></i> 危険な操作</label>
+                 <button onclick="deleteAllData()" class="w-full bg-red-900/40 text-red-400 py-3 rounded-xl hover:bg-red-900/60 text-sm font-bold flex items-center justify-center gap-2 transition-colors">
+                    <i class="fa-solid fa-trash-can"></i> 全データを消去する
                  </button>
             </div>
 
-            <button onclick="handleLogout()" class="w-full border border-red-900/50 text-red-400 py-3 rounded-xl hover:bg-red-900/20 text-sm font-bold mt-4">
+            <button onclick="handleLogout()" class="w-full border border-gray-700 text-gray-400 py-3 rounded-xl hover:bg-gray-800 text-sm font-bold mt-4 transition-colors">
                 <i class="fa-solid fa-right-from-bracket mr-2"></i> ログアウト
             </button>
         </div>
@@ -293,7 +309,7 @@
     <!-- ================= JAVASCRIPT ================= -->
     <script type="module">
         // --- FIREBASE CONFIGURATION (ここに自分の設定を貼り付け) ---
-        const firebaseConfig = {
+       const firebaseConfig = {
   apiKey: "AIzaSyCh6ml98fmFPvPptdYQcPnOLc06kK7uVCQ",
   authDomain: "dateplan-38034.firebaseapp.com",
   projectId: "dateplan-38034",
@@ -301,7 +317,6 @@
   messagingSenderId: "243893644952",
   appId: "1:243893644952:web:2a0953206d782a9965eaed"
 };
-
         // --------------------------------------------------------
 
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
@@ -578,11 +593,45 @@
             }
         };
 
+        // 全データ出力ロジック (JSONとしてクリップボードにコピー)
+        window.exportAllPlans = () => {
+            const allData = window.state.data.plans;
+            if (allData.length === 0) {
+                alert("出力するデータがありません。");
+                return;
+            }
+            
+            const jsonStr = JSON.stringify(allData, null, 2);
+
+            const textArea = document.createElement("textarea");
+            textArea.value = jsonStr;
+            textArea.style.position = "fixed";
+            textArea.style.left = "-9999px";
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+
+            try {
+                const successful = document.execCommand('copy');
+                if (successful) {
+                    alert(`全${allData.length}件のプランデータをクリップボードにコピーしました！`);
+                    closeModal('settings-modal');
+                } else {
+                    alert("コピーに失敗しました。");
+                }
+            } catch (err) {
+                console.error('Fallback: Oops, unable to copy', err);
+                alert("お使いのブラウザではコピー機能がサポートされていません。");
+            }
+
+            document.body.removeChild(textArea);
+        };
+
         function updateBulkActionPanel() {
             const panel = document.getElementById('bulk-action-panel');
             const count = document.getElementById('bulk-action-count');
             if(window.state.selectedPlans.size > 0) {
-                count.innerText = `${window.state.selectedPlans.size}件選択中`;
+                count.innerText = `${window.state.selectedPlans.size}件`;
                 panel.classList.remove('translate-y-24', 'opacity-0', 'pointer-events-none');
             } else {
                 panel.classList.add('translate-y-24', 'opacity-0', 'pointer-events-none');
@@ -607,6 +656,24 @@
                     window.state.filter = 'すべて';
                 }
                 await saveDataToCloud();
+            }
+        };
+
+        // 全データクリアロジック
+        window.deleteAllData = async () => {
+            if(confirm("【警告】すべてのプランと追加したカテゴリが完全に削除されます。\n元に戻すことはできません。本当によろしいですか？")) {
+                if(prompt("確認のため、「削除」と入力してください。") === "削除") {
+                    window.state.data.plans = [];
+                    window.state.data.categories = [...DEFAULT_CATEGORIES];
+                    window.state.selectedPlans.clear();
+                    window.state.filter = 'すべて';
+                    updateBulkActionPanel();
+                    await saveDataToCloud();
+                    closeModal('settings-modal');
+                    alert("全データを消去しました。");
+                } else {
+                    alert("キャンセルしました。");
+                }
             }
         };
 
