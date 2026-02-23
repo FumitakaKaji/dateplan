@@ -142,14 +142,18 @@
     </main>
 
     <!-- ================= FOOTER NAV ================= -->
-    <nav class="fixed bottom-0 left-0 right-0 bg-gray-900/95 backdrop-blur-xl border-t border-gray-800 px-6 py-2 flex justify-center items-center gap-16 z-40 pb-safe">
-        <button onclick="switchTab('all')" id="nav-all" class="flex flex-col items-center gap-1 p-2 text-brand-accent transition-all">
+    <nav class="fixed bottom-0 left-0 right-0 bg-gray-900/95 backdrop-blur-xl border-t border-gray-800 px-4 py-2 flex justify-around items-center z-40 pb-safe max-w-md mx-auto">
+        <button onclick="switchTab('all')" id="nav-all" class="flex flex-col items-center gap-1 p-2 text-brand-accent transition-all w-16">
             <i class="fa-solid fa-house text-xl"></i>
             <span class="text-[10px] font-bold">ホーム</span>
         </button>
-        <button onclick="switchTab('favorites')" id="nav-fav" class="flex flex-col items-center gap-1 p-2 text-gray-500 hover:text-gray-300 transition-all">
+        <button onclick="switchTab('favorites')" id="nav-fav" class="flex flex-col items-center gap-1 p-2 text-gray-500 hover:text-gray-300 transition-all w-16">
             <i class="fa-solid fa-heart text-xl"></i>
             <span class="text-[10px] font-bold">お気に入り</span>
+        </button>
+        <button onclick="switchTab('done')" id="nav-done" class="flex flex-col items-center gap-1 p-2 text-gray-500 hover:text-gray-300 transition-all w-16">
+            <i class="fa-regular fa-circle-check text-xl"></i>
+            <span class="text-[10px] font-bold">行った済</span>
         </button>
     </nav>
 
@@ -309,7 +313,7 @@
     <!-- ================= JAVASCRIPT ================= -->
     <script type="module">
         // --- FIREBASE CONFIGURATION (ここに自分の設定を貼り付け) ---
-       const firebaseConfig = {
+        const firebaseConfig = {
   apiKey: "AIzaSyCh6ml98fmFPvPptdYQcPnOLc06kK7uVCQ",
   authDomain: "dateplan-38034.firebaseapp.com",
   projectId: "dateplan-38034",
@@ -317,6 +321,7 @@
   messagingSenderId: "243893644952",
   appId: "1:243893644952:web:2a0953206d782a9965eaed"
 };
+
         // --------------------------------------------------------
 
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
@@ -330,7 +335,7 @@
             data: { plans: [], categories: [] },
             filter: 'すべて',
             sortBy: 'budget', // 'budget' | 'budget-desc'
-            viewMode: 'all',  // 'all' | 'favorites'
+            viewMode: 'all',  // 'all' | 'favorites' | 'done'
             unsubscribe: null,
             selectedPlans: new Set() // 一括削除用
         };
@@ -743,16 +748,36 @@
             }
             if (window.state.viewMode === 'favorites') {
                 list = list.filter(p => p.likes && p.likes.includes(window.state.user.uid));
+            } else if (window.state.viewMode === 'done') {
+                list = list.filter(p => p.done);
             }
 
             if (window.state.sortBy === 'budget') list.sort((a,b) => a.budget - b.budget);
             if (window.state.sortBy === 'budget-desc') list.sort((a,b) => b.budget - a.budget);
 
-            document.getElementById('plan-count').textContent = `${list.length} 件のプラン`;
+            let countLabel = '件のプラン';
+            if (window.state.viewMode === 'favorites') countLabel = '件のお気に入り';
+            if (window.state.viewMode === 'done') countLabel = '件の行った済プラン';
+            document.getElementById('plan-count').textContent = `${list.length} ${countLabel}`;
+
             const container = document.getElementById('plan-list');
             
             if (list.length === 0) {
-                container.innerHTML = `<div class="text-center py-10 text-gray-600"><p>プランがありません。</p></div>`;
+                if (window.state.viewMode === 'favorites') {
+                    container.innerHTML = `
+                        <div class="text-center py-20 text-gray-600">
+                            <i class="fa-solid fa-heart w-12 h-12 mx-auto mb-3 opacity-20 text-4xl block"></i>
+                            <p class="text-sm">まだお気に入りがありません。<br>気になるプランに♡を押してみてね！</p>
+                        </div>`;
+                } else if (window.state.viewMode === 'done') {
+                    container.innerHTML = `
+                        <div class="text-center py-20 text-gray-600">
+                            <i class="fa-regular fa-circle-check w-12 h-12 mx-auto mb-3 opacity-20 text-4xl block"></i>
+                            <p class="text-sm">まだ「行った済」のプランがありません。<br>デートに行ったらチェックしてみましょう！</p>
+                        </div>`;
+                } else {
+                    container.innerHTML = `<div class="text-center py-10 text-gray-600"><p>プランがありません。</p></div>`;
+                }
                 return;
             }
 
@@ -832,8 +857,10 @@
         window.setFilter = (cat) => { window.state.filter = cat; render(); };
         window.switchTab = (mode) => { 
             window.state.viewMode = mode; 
-            document.getElementById('nav-all').className = mode === 'all' ? 'flex flex-col items-center gap-1 p-2 text-brand-accent transition-all' : 'flex flex-col items-center gap-1 p-2 text-gray-500 hover:text-gray-300 transition-all';
-            document.getElementById('nav-fav').className = mode === 'favorites' ? 'flex flex-col items-center gap-1 p-2 text-brand-accent transition-all' : 'flex flex-col items-center gap-1 p-2 text-gray-500 hover:text-gray-300 transition-all';
+            const baseClass = 'flex flex-col items-center gap-1 p-2 transition-all w-16';
+            document.getElementById('nav-all').className = mode === 'all' ? `${baseClass} text-brand-accent` : `${baseClass} text-gray-500 hover:text-gray-300`;
+            document.getElementById('nav-fav').className = mode === 'favorites' ? `${baseClass} text-brand-accent` : `${baseClass} text-gray-500 hover:text-gray-300`;
+            document.getElementById('nav-done').className = mode === 'done' ? `${baseClass} text-brand-accent` : `${baseClass} text-gray-500 hover:text-gray-300`;
             render(); 
         };
         window.toggleSort = () => { 
