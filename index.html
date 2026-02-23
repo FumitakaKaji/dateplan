@@ -20,11 +20,11 @@
                 extend: {
                     colors: {
                         brand: {
-                            dark: '#1a1614',    /* Deep Chocolate/Black */
-                            primary: '#5D4037', /* Chocolate */
-                            accent: '#D4AF37',  /* Gold */
-                            light: '#EFEBE9',   /* Beige */
-                            surface: '#2c2420'  /* Card Surface */
+                            dark: '#1a1614',    
+                            primary: '#5D4037', 
+                            accent: '#D4AF37',  
+                            light: '#EFEBE9',   
+                            surface: '#2c2420'  
                         }
                     },
                     fontFamily: {
@@ -36,8 +36,8 @@
     </script>
     <style>
         body {
-            background-color: #111827; /* gray-900 */
-            color: #E5E7EB; /* gray-200 */
+            background-color: #111827;
+            color: #E5E7EB;
             -webkit-font-smoothing: antialiased;
         }
         .no-scrollbar::-webkit-scrollbar { display: none; }
@@ -84,16 +84,20 @@
             <span class="font-bold text-lg tracking-tight text-gray-100">DatePlans</span>
         </div>
         
-        <div class="flex items-center gap-3">
+        <div class="flex items-center gap-2">
             <!-- Sync Status -->
-            <div id="sync-status" class="text-xs font-mono text-gray-500 flex items-center gap-1.5">
-                <span class="w-2 h-2 rounded-full bg-gray-600"></span> オフライン
+            <div id="sync-status" class="text-[10px] font-mono text-gray-500 flex items-center gap-1 hidden sm:flex mr-2">
+                <span class="w-1.5 h-1.5 rounded-full bg-gray-600"></span>
             </div>
             
-            <!-- User Menu -->
-            <button onclick="openSettings()" class="w-8 h-8 rounded-full bg-gray-800 border border-gray-700 overflow-hidden focus:outline-none focus:ring-2 focus:ring-brand-accent">
-                <img id="user-avatar" src="" alt="User" class="w-full h-full object-cover hidden">
-                <i id="user-icon-placeholder" class="fa-solid fa-user text-gray-400 text-xs mt-2"></i>
+            <!-- Connected Users (自分と相手のアイコン) -->
+            <div id="connected-users" class="flex items-center -space-x-2 mr-2">
+                <!-- JSで動的生成 -->
+            </div>
+
+            <!-- Settings Menu -->
+            <button onclick="openSettings()" class="w-8 h-8 rounded-full bg-gray-800 border border-gray-700 flex items-center justify-center hover:bg-gray-700 transition-colors">
+                <i class="fa-solid fa-gear text-gray-400 text-sm"></i>
             </button>
         </div>
     </header>
@@ -102,7 +106,7 @@
     <main class="max-w-md mx-auto px-4 pt-6">
         
         <!-- Hero: Today's Pick -->
-        <div id="hero-section" class="relative bg-gradient-to-br from-brand-primary to-gray-800 rounded-3xl p-6 shadow-2xl mb-8 overflow-hidden border border-white/5">
+        <div id="hero-section" class="relative bg-gradient-to-br from-brand-primary to-gray-800 rounded-3xl p-6 shadow-2xl mb-6 overflow-hidden border border-white/5">
             <div class="absolute top-0 right-0 w-32 h-32 bg-brand-accent/20 rounded-full blur-3xl -mr-10 -mt-10"></div>
             
             <div class="relative z-10">
@@ -114,6 +118,17 @@
                     <!-- Injected by JS -->
                 </div>
             </div>
+        </div>
+
+        <!-- Search Bar -->
+        <div class="mb-5 relative">
+            <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                <i class="fa-solid fa-magnifying-glass text-gray-500 text-sm"></i>
+            </div>
+            <input type="text" id="search-input" oninput="handleSearch(this.value)" class="w-full bg-gray-800/80 border border-gray-700/50 rounded-2xl pl-10 pr-10 py-3 text-sm text-gray-200 focus:border-brand-accent focus:bg-gray-800 outline-none transition-all shadow-inner" placeholder="プラン名、エリア、特徴で検索...">
+            <button onclick="clearSearch()" id="search-clear-btn" class="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-500 hover:text-gray-300 hidden transition-colors">
+                <i class="fa-solid fa-circle-xmark"></i>
+            </button>
         </div>
 
         <!-- Filter Tabs -->
@@ -214,7 +229,6 @@
                     <textarea name="why" rows="2" class="w-full bg-gray-900 border border-gray-700 rounded-xl px-4 py-3 mt-1 text-gray-200 focus:border-brand-accent outline-none" placeholder="例：雰囲気が良くて記念日にぴったり"></textarea>
                 </div>
 
-                <!-- 分割したメモ欄とリンク欄 -->
                 <div>
                     <label class="text-xs font-bold text-gray-500 uppercase tracking-wider">メモ</label>
                     <textarea name="memo" id="input-memo" rows="2" class="w-full bg-gray-900 border border-gray-700 rounded-xl px-4 py-3 mt-1 text-gray-200 focus:border-brand-accent outline-none" placeholder="例：予約は早めがおすすめ"></textarea>
@@ -248,6 +262,15 @@
                 <button onclick="closeModal('settings-modal')" class="w-8 h-8 rounded-full bg-gray-700 text-gray-400 flex items-center justify-center hover:bg-gray-600"><i class="fa-solid fa-xmark"></i></button>
             </div>
 
+            <!-- Profile Info (Readonly) -->
+            <div class="flex items-center gap-3 mb-6 p-4 bg-gray-900 rounded-xl border border-gray-700">
+                <img id="settings-avatar" src="" class="w-12 h-12 rounded-full object-cover border border-gray-600">
+                <div>
+                    <p id="settings-name" class="font-bold text-sm text-gray-200">Name</p>
+                    <p class="text-[10px] text-gray-500 font-mono">ID: <span id="settings-uid"></span></p>
+                </div>
+            </div>
+
             <!-- Category Management -->
             <div class="mb-8">
                 <label class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 block">カテゴリ管理</label>
@@ -277,7 +300,7 @@
                         <input type="text" id="target-uid-input" class="flex-1 bg-black border border-gray-700 rounded-lg px-3 py-2 text-sm text-white font-mono placeholder-gray-600 outline-none focus:border-brand-accent" placeholder="Partner's UID">
                         <button onclick="setTargetUid()" class="bg-gray-700 hover:bg-gray-600 px-4 py-2 rounded-lg text-xs font-bold text-white transition-colors">接続</button>
                     </div>
-                    <p id="connection-status" class="text-[10px] text-brand-accent mt-2 hidden"><i class="fa-solid fa-link"></i> パートナーと接続済み</p>
+                    <p id="connection-status" class="text-[10px] text-brand-accent mt-2 hidden"><i class="fa-solid fa-link"></i> パートナーのデータに接続中</p>
                 </div>
             </div>
 
@@ -312,6 +335,7 @@
 
     <!-- ================= JAVASCRIPT ================= -->
     <script type="module">
+        // --- FIREBASE CONFIGURATION (ここに自分の設定を貼り付け) ---
         const firebaseConfig = {
   apiKey: "AIzaSyCh6ml98fmFPvPptdYQcPnOLc06kK7uVCQ",
   authDomain: "dateplan-38034.firebaseapp.com",
@@ -323,19 +347,20 @@
         // --------------------------------------------------------
 
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
-        import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
+        import { getAuth, signInWithRedirect, getRedirectResult, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
         import { getFirestore, doc, getDoc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
 
         // Global State
         window.state = {
             user: null,
             targetUid: null,
-            data: { plans: [], categories: [] },
+            data: { plans: [], categories: [], users: {} }, // users情報を追加
             filter: 'すべて',
             sortBy: 'budget', // 'budget' | 'budget-desc'
             viewMode: 'all',  // 'all' | 'favorites' | 'done'
+            searchQuery: '',  // 検索クエリ
             unsubscribe: null,
-            selectedPlans: new Set() // 一括削除用
+            selectedPlans: new Set()
         };
 
         const DEFAULT_CATEGORIES = ['夜ごはん', '休日昼', '遠出', 'お家', '季節限定', 'お泊まり'];
@@ -356,21 +381,27 @@
         const loginBtn = document.getElementById('login-btn');
         const authOverlay = document.getElementById('auth-overlay');
 
+        // ★ リダイレクト方式でのログインに変更（LINE内ブラウザ対策）
         loginBtn.addEventListener('click', async () => {
             try {
                 loginBtn.innerHTML = '<div class="loader"></div>';
-                await signInWithPopup(auth, provider);
+                await signInWithRedirect(auth, provider);
             } catch (error) {
                 console.error(error);
-                let errorMessage = `ログインエラー: ${error.message}`;
-                
-                if (error.code === 'auth/unauthorized-domain') {
-                    errorMessage = "【設定エラー】\nこのサイトのURLがFirebaseの「承認済みドメイン」に登録されていません。\n\nFirebase Consoleを開き、「Authentication」→「Settings（設定）」→「Authorized domains（承認済みドメイン）」に現在のURLを追加してください。";
-                }
-                
-                alert(errorMessage);
+                alert(`ログインエラー: ${error.message}`);
                 loginBtn.innerHTML = '<i class="fa-brands fa-google text-xl"></i><span>Googleでログイン</span>';
             }
+        });
+
+        // リダイレクトから戻ってきたときのエラーハンドリング
+        getRedirectResult(auth).catch((error) => {
+            console.error("Redirect Auth Error:", error);
+            let errorMessage = `ログインエラー: ${error.message}`;
+            if (error.code === 'auth/unauthorized-domain') {
+                errorMessage = "【設定エラー】\nこのサイトのURLがFirebaseの「承認済みドメイン」に登録されていません。\nFirebase Consoleで設定を確認してください。";
+            }
+            alert(errorMessage);
+            loginBtn.innerHTML = '<i class="fa-brands fa-google text-xl"></i><span>Googleでログイン</span>';
         });
 
         window.handleLogout = async () => {
@@ -384,9 +415,12 @@
             if (user) {
                 // Logged In
                 authOverlay.classList.add('opacity-0', 'pointer-events-none');
-                document.getElementById('user-avatar').src = user.photoURL;
-                document.getElementById('user-avatar').classList.remove('hidden');
-                document.getElementById('user-icon-placeholder').classList.add('hidden');
+                
+                // 設定画面用プロフィール
+                document.getElementById('settings-avatar').src = user.photoURL;
+                document.getElementById('settings-name').textContent = user.displayName;
+                document.getElementById('settings-uid').textContent = user.uid;
+                
                 document.getElementById('my-uid-display').textContent = user.uid;
                 
                 const savedTarget = localStorage.getItem('smartDate_targetUid');
@@ -401,7 +435,7 @@
             } else {
                 // Logged Out
                 authOverlay.classList.remove('opacity-0', 'pointer-events-none');
-                window.state.data = { plans: [], categories: [] };
+                window.state.data = { plans: [], categories: [], users: {} };
                 render();
             }
         });
@@ -419,19 +453,21 @@
             window.state.unsubscribe = onSnapshot(docRef, (docSnap) => {
                 if (docSnap.exists()) {
                     const cloudData = docSnap.data();
-                    window.state.data = cloudData.json ? JSON.parse(cloudData.json) : { plans: [], categories: [] };
+                    window.state.data = cloudData.json ? JSON.parse(cloudData.json) : { plans: [], categories: [], users: {} };
                     
-                    // カテゴリが存在しない場合はデフォルトを入れる
                     if (!window.state.data.categories || window.state.data.categories.length === 0) {
                         window.state.data.categories = [...DEFAULT_CATEGORIES];
                     }
+                    if (!window.state.data.users) window.state.data.users = {};
+
                     updateSyncStatus('同期完了', 'green');
                 } else {
                     // No data yet
-                    window.state.data = { plans: [], categories: [...DEFAULT_CATEGORIES] };
+                    window.state.data = { plans: [], categories: [...DEFAULT_CATEGORIES], users: {} };
                     updateSyncStatus('データなし', 'gray');
                 }
-                // 存在しないIDが選択状態に残らないようフィルタリング
+                
+                // IDフィルタリング
                 const existingIds = new Set(window.state.data.plans.map(p => p.id));
                 window.state.selectedPlans = new Set([...window.state.selectedPlans].filter(id => existingIds.has(id)));
                 
@@ -451,6 +487,13 @@
             updateSyncStatus('保存中...', 'yellow');
             
             try {
+                // ★ 自分のプロフィール情報をデータにマージ（アイコン表示用）
+                if (!window.state.data.users) window.state.data.users = {};
+                window.state.data.users[window.state.user.uid] = {
+                    photoURL: window.state.user.photoURL,
+                    displayName: window.state.user.displayName || "User"
+                };
+
                 const docRef = doc(db, "users", window.state.targetUid, "appData", "v1");
                 const payload = {
                     json: JSON.stringify(window.state.data),
@@ -460,13 +503,56 @@
                 await setDoc(docRef, payload);
             } catch (error) {
                 console.error("Save Error:", error);
-                // エラーの詳細をアラートで表示（権限不足など）
-                alert(`保存に失敗しました。\nエラー: ${error.message}\nFirebaseのルール設定などが正しいか確認してください。`);
+                alert(`保存に失敗しました。\nエラー: ${error.message}`);
                 updateSyncStatus('エラー', 'red');
             }
         }
 
         // --- App Logic ---
+
+        // 検索ハンドラー
+        window.handleSearch = (val) => {
+            window.state.searchQuery = val.trim().toLowerCase();
+            document.getElementById('search-clear-btn').classList.toggle('hidden', window.state.searchQuery === '');
+            renderList();
+        };
+
+        window.clearSearch = () => {
+            document.getElementById('search-input').value = '';
+            window.handleSearch('');
+        };
+
+        // シェア機能
+        window.sharePlan = async (id) => {
+            const plan = window.state.data.plans.find(p => p.id === id);
+            if (!plan) return;
+
+            // シェア用テキストの組み立て
+            let text = `ここどう？🥂\n【${plan.name}】\n💰 予算: 約¥${plan.budget.toLocaleString()}\n\n💬 ${plan.activity}\n${plan.why}\n`;
+            if (plan.links && plan.links.length > 0) {
+                text += `\n🔗 ${plan.links[0]}`;
+            }
+
+            // Web Share API が使えるスマホ等の場合
+            if (navigator.share) {
+                try {
+                    await navigator.share({
+                        title: 'デートプランの提案',
+                        text: text
+                    });
+                } catch (err) {
+                    console.log('Share canceled', err);
+                }
+            } else {
+                // 使えないPCブラウザ等はクリップボードにコピー
+                try {
+                    await navigator.clipboard.writeText(text);
+                    alert("プランの詳細をクリップボードにコピーしました！\nLINE等に貼り付けて相手に送信できます。");
+                } catch (err) {
+                    alert("コピーに失敗しました。");
+                }
+            }
+        };
 
         window.importJsonData = async () => {
             const inputEl = document.getElementById('import-json-input');
@@ -489,16 +575,10 @@
                     for (const p of newPlans) {
                         if (!p.name) continue; 
                         
-                        // IDの重複判定ではなく、名前での重複判定に変更
                         const isNameDuplicate = window.state.data.plans.some(existing => existing.name === p.name);
-                        if (isNameDuplicate) {
-                            continue; // 既に同じ名前のプランがある場合はスキップ
-                        }
+                        if (isNameDuplicate) continue; 
 
-                        // アプリ側で安全なIDを強制的に再割り当て（AIのIDかぶりを防止）
                         p.id = Date.now() + Math.floor(Math.random() * 100000) + importedCount;
-                        
-                        // 欠損プロパティの補完（安全対策）
                         if (!p.links) p.links = [];
                         if (typeof p.isChoco === 'undefined') p.isChoco = false;
                         if (typeof p.done === 'undefined') p.done = false;
@@ -516,7 +596,6 @@
 
                     window.state.data.plans = [...window.state.data.plans, ...newValidPlans];
                     
-                    // インポートしたデータに未知のカテゴリがあれば自動追加
                     newValidPlans.forEach(p => {
                         if (p.category && !window.state.data.categories.includes(p.category)) {
                             window.state.data.categories.push(p.category);
@@ -538,7 +617,6 @@
             const form = e.target;
             const formData = new FormData(form);
             
-            // リンクのテキストエリアから改行区切りで配列を作成
             const linksText = formData.get('links');
             const linksArray = linksText ? linksText.split('\n').map(l => l.trim()).filter(l => l !== '') : [];
 
@@ -588,7 +666,6 @@
             await saveDataToCloud();
         };
 
-        // 個別削除
         window.deletePlan = async (id) => {
             if(confirm('このプランを削除してもよろしいですか？')) {
                 window.state.data.plans = window.state.data.plans.filter(p => p.id !== id);
@@ -600,7 +677,6 @@
             }
         };
 
-        // 一括選択・削除ロジック
         window.toggleSelection = (id) => {
             if(window.state.selectedPlans.has(id)) {
                 window.state.selectedPlans.delete(id);
@@ -608,7 +684,7 @@
                 window.state.selectedPlans.add(id);
             }
             updateBulkActionPanel();
-            renderList(); // チェックボックスの見た目更新
+            renderList(); 
         };
 
         window.clearSelection = () => {
@@ -626,7 +702,6 @@
             }
         };
 
-        // 全データ出力ロジック (JSONとしてクリップボードにコピー)
         window.exportAllPlans = () => {
             const allData = window.state.data.plans;
             if (allData.length === 0) {
@@ -671,7 +746,6 @@
             }
         }
 
-        // カテゴリ管理ロジック
         window.addCategory = async () => {
             const input = document.getElementById('new-category-input');
             const val = input.value.trim();
@@ -692,7 +766,6 @@
             }
         };
 
-        // 全データクリアロジック
         window.deleteAllData = async () => {
             if(confirm("【警告】すべてのプランと追加したカテゴリが完全に削除されます。\n元に戻すことはできません。本当によろしいですか？")) {
                 if(prompt("確認のため、「削除」と入力してください。") === "削除") {
@@ -710,7 +783,6 @@
             }
         };
 
-        // --- Settings Logic ---
         window.copyUid = () => {
             const uid = document.getElementById('my-uid-display').innerText;
             navigator.clipboard.writeText(uid);
@@ -731,10 +803,29 @@
         // --- UI Rendering ---
 
         function render() {
+            renderHeaderUsers();
             renderTabs();
             renderList();
             renderCategorySettings();
             renderCategorySelect();
+        }
+
+        // ヘッダーに繋がっているユーザーのアイコンを表示
+        function renderHeaderUsers() {
+            const container = document.getElementById('connected-users');
+            if (!window.state.data.users) {
+                container.innerHTML = '';
+                return;
+            }
+            
+            const uids = Object.keys(window.state.data.users);
+            container.innerHTML = uids.map(uid => {
+                const u = window.state.data.users[uid];
+                if (!u || !u.photoURL) return '';
+                const isMe = window.state.user && uid === window.state.user.uid;
+                const borderClass = isMe ? 'border-brand-accent z-10' : 'border-gray-600 opacity-90';
+                return `<img src="${u.photoURL}" class="w-7 h-7 rounded-full border-2 ${borderClass} object-cover relative shadow-sm" title="${u.displayName}">`;
+            }).join('');
         }
 
         function renderTabs() {
@@ -743,7 +834,7 @@
             
             container.innerHTML = cats.map(cat => `
                 <button onclick="setFilter('${cat}')" 
-                    class="whitespace-nowrap px-4 py-2 rounded-full text-xs font-bold transition-all border ${window.state.filter === cat ? 'bg-brand-primary text-brand-accent border-brand-accent' : 'bg-gray-800 text-gray-400 border-gray-700'}">
+                    class="whitespace-nowrap px-4 py-2 rounded-full text-xs font-bold transition-all border ${window.state.filter === cat ? 'bg-brand-primary text-brand-accent border-brand-accent' : 'bg-gray-800 text-gray-400 border-gray-700 hover:bg-gray-700/50'}">
                     ${cat}
                 </button>
             `).join('');
@@ -771,27 +862,43 @@
         function renderList() {
             let list = [...window.state.data.plans];
             
+            // カテゴリフィルタ
             if (window.state.filter !== 'すべて') {
                 list = list.filter(p => p.category === window.state.filter);
             }
+            // タブフィルタ
             if (window.state.viewMode === 'favorites') {
                 list = list.filter(p => p.likes && p.likes.includes(window.state.user.uid));
             } else if (window.state.viewMode === 'done') {
                 list = list.filter(p => p.done);
             }
+            // 検索フィルタ
+            if (window.state.searchQuery) {
+                const q = window.state.searchQuery;
+                list = list.filter(p => 
+                    p.name.toLowerCase().includes(q) || 
+                    p.activity.toLowerCase().includes(q) || 
+                    (p.why && p.why.toLowerCase().includes(q)) || 
+                    (p.memo && p.memo.toLowerCase().includes(q))
+                );
+            }
 
+            // ソート
             if (window.state.sortBy === 'budget') list.sort((a,b) => a.budget - b.budget);
             if (window.state.sortBy === 'budget-desc') list.sort((a,b) => b.budget - a.budget);
 
             let countLabel = '件のプラン';
             if (window.state.viewMode === 'favorites') countLabel = '件のお気に入り';
             if (window.state.viewMode === 'done') countLabel = '件の行った済プラン';
+            if (window.state.searchQuery) countLabel = '件の検索結果';
             document.getElementById('plan-count').textContent = `${list.length} ${countLabel}`;
 
             const container = document.getElementById('plan-list');
             
             if (list.length === 0) {
-                if (window.state.viewMode === 'favorites') {
+                if (window.state.searchQuery) {
+                    container.innerHTML = `<div class="text-center py-10 text-gray-600"><p>一致するプランが見つかりません。</p></div>`;
+                } else if (window.state.viewMode === 'favorites') {
                     container.innerHTML = `
                         <div class="text-center py-20 text-gray-600">
                             <i class="fa-solid fa-heart w-12 h-12 mx-auto mb-3 opacity-20 text-4xl block"></i>
@@ -810,7 +917,7 @@
             }
 
             container.innerHTML = list.map(plan => {
-                const isLiked = plan.likes && plan.likes.includes(window.state.user.uid);
+                const isLiked = plan.likes && window.state.user && plan.likes.includes(window.state.user.uid);
                 const isDone = plan.done;
                 const isSelected = window.state.selectedPlans.has(plan.id);
                 
@@ -825,8 +932,18 @@
                        </div>`
                     : '';
 
+                // ★ いいねしたユーザーのアイコン群を生成
+                const likedUsersHtml = plan.likes && plan.likes.length > 0 ? 
+                    `<div class="flex -space-x-1.5 mr-2">
+                        ${plan.likes.map(uid => {
+                            const u = window.state.data.users && window.state.data.users[uid];
+                            if (!u || !u.photoURL) return '';
+                            return `<img src="${u.photoURL}" class="w-5 h-5 rounded-full border border-gray-800 object-cover" title="${u.displayName}">`;
+                        }).join('')}
+                    </div>` : '';
+
                 return `
-                <div onclick="toggleSelection(${plan.id})" class="fade-in bg-gray-800 rounded-2xl overflow-hidden border ${isDone ? 'border-green-800 opacity-80' : 'border-gray-700'} relative group cursor-pointer transition-all ${isSelected ? 'ring-2 ring-red-500 bg-gray-700' : 'hover:bg-gray-700/50'}">
+                <div onclick="toggleSelection(${plan.id})" class="fade-in bg-gray-800 rounded-2xl overflow-hidden border ${isDone ? 'border-green-800 opacity-80' : 'border-gray-700'} relative group cursor-pointer transition-all ${isSelected ? 'ring-2 ring-red-500 bg-gray-700' : 'hover:bg-gray-700/50'} shadow-lg">
                     <!-- Image/Color Banner -->
                     <div class="h-24 ${plan.isChoco ? 'bg-[#3E2723]' : 'bg-gray-700'} relative overflow-hidden pointer-events-none">
                         ${plan.isChoco ? '<div class="absolute inset-0 opacity-20 bg-[url(\'https://www.transparenttextures.com/patterns/cubes.png\')]"></div>' : ''}
@@ -838,8 +955,8 @@
                         </div>
 
                         <div class="absolute bottom-2 left-3 flex gap-2">
-                             <span class="text-[10px] font-bold bg-gray-900/80 text-gray-300 px-2 py-1 rounded backdrop-blur-sm">${plan.category}</span>
-                             ${plan.isChoco ? '<span class="text-[10px] font-bold bg-brand-accent text-brand-dark px-2 py-1 rounded"><i class="fa-solid fa-mug-hot"></i> チョコ</span>' : ''}
+                             <span class="text-[10px] font-bold bg-gray-900/80 text-gray-300 px-2 py-1 rounded backdrop-blur-sm shadow-sm">${plan.category}</span>
+                             ${plan.isChoco ? '<span class="text-[10px] font-bold bg-brand-accent text-brand-dark px-2 py-1 rounded shadow-sm"><i class="fa-solid fa-mug-hot"></i> チョコ</span>' : ''}
                         </div>
 
                         <div class="absolute right-2 top-2 flex gap-1.5 pointer-events-auto">
@@ -847,7 +964,7 @@
                              <button onclick="event.stopPropagation(); deletePlan(${plan.id})" class="w-8 h-8 rounded-full bg-black/50 text-white hover:bg-red-500 flex items-center justify-center transition-colors backdrop-blur"><i class="fa-solid fa-trash text-xs"></i></button>
                         </div>
 
-                        ${isDone ? '<div class="absolute inset-0 bg-black/60 flex items-center justify-center"><span class="text-green-400 font-bold border-2 border-green-400 px-3 py-1 rounded transform -rotate-12 text-sm">行った済</span></div>' : ''}
+                        ${isDone ? '<div class="absolute inset-0 bg-black/60 flex items-center justify-center backdrop-blur-sm"><span class="text-green-400 font-bold border-2 border-green-400 px-3 py-1 rounded transform -rotate-12 text-sm shadow-[0_0_15px_rgba(74,222,128,0.3)]">行った済</span></div>' : ''}
                     </div>
 
                     <div class="p-4">
@@ -860,20 +977,31 @@
                             <span><i class="fa-solid fa-wallet text-brand-accent mr-1"></i> ¥${plan.budget.toLocaleString()}</span>
                         </div>
 
-                        <div class="bg-gray-900/50 p-3 rounded-lg border border-gray-700 mb-3">
-                            <p class="text-xs text-gray-300"><i class="fa-solid fa-quote-left text-gray-600 mr-1"></i> ${plan.why}</p>
-                            ${plan.memo ? `<div class="mt-2 pt-2 border-t border-gray-700 text-[10px] text-gray-500 font-mono"><span class="font-bold text-gray-400 block mb-1">MEMO</span>${plan.memo.replace(/\n/g, '<br>')}</div>` : ''}
+                        <div class="bg-gray-900/50 p-3 rounded-xl border border-gray-700/50 mb-3">
+                            <p class="text-xs text-gray-300 leading-relaxed"><i class="fa-solid fa-quote-left text-gray-600 mr-1.5"></i>${plan.why}</p>
+                            ${plan.memo ? `<div class="mt-2 pt-2 border-t border-gray-700/50 text-[10px] text-gray-500 font-mono"><span class="font-bold text-gray-400 block mb-1">MEMO</span>${plan.memo.replace(/\n/g, '<br>')}</div>` : ''}
                             ${linkList}
                         </div>
 
-                        <div class="flex items-center justify-between mt-2">
-                            <button onclick="event.stopPropagation(); toggleDone(${plan.id})" class="text-xs font-bold ${isDone ? 'text-green-500' : 'text-gray-500 hover:text-gray-300'} flex items-center gap-1 px-3 py-1.5 rounded-lg hover:bg-gray-700 transition-colors">
+                        <div class="flex items-center justify-between mt-2 pt-1">
+                            <button onclick="event.stopPropagation(); toggleDone(${plan.id})" class="text-xs font-bold ${isDone ? 'text-green-500 bg-green-900/20' : 'text-gray-500 bg-gray-700/30 hover:bg-gray-700/80 hover:text-gray-300'} flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-colors border border-transparent ${isDone ? 'border-green-900/50' : ''}">
                                 <i class="fa-regular fa-circle-check"></i> ${isDone ? '行った済' : '行った！'}
                             </button>
 
-                            <button onclick="event.stopPropagation(); toggleLike(${plan.id})" class="text-xl transition-transform active:scale-125 ${isLiked ? 'text-red-500 icon-pop' : 'text-gray-600 hover:text-gray-400'} p-2">
-                                <i class="${isLiked ? 'fa-solid' : 'fa-regular'} fa-heart"></i>
-                            </button>
+                            <div class="flex items-center">
+                                <!-- シェアボタン -->
+                                <button onclick="event.stopPropagation(); sharePlan(${plan.id})" class="text-gray-500 hover:text-gray-300 transition-colors p-2 mr-2">
+                                    <i class="fa-solid fa-arrow-up-from-bracket"></i>
+                                </button>
+                                
+                                <!-- いいねしたユーザー群 -->
+                                ${likedUsersHtml}
+                                
+                                <!-- いいねボタン -->
+                                <button onclick="event.stopPropagation(); toggleLike(${plan.id})" class="text-xl transition-transform active:scale-125 ${isLiked ? 'text-red-500 icon-pop' : 'text-gray-600 hover:text-gray-400'} p-1">
+                                    <i class="${isLiked ? 'fa-solid' : 'fa-regular'} fa-heart"></i>
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -912,7 +1040,6 @@
                     form.querySelector('[name=activity]').value = plan.activity;
                     form.querySelector('[name=why]').value = plan.why;
                     
-                    // 分割したメモとリンクをセット
                     document.getElementById('input-memo').value = plan.memo || '';
                     document.getElementById('input-links').value = (plan.links || []).join('\n');
                     
@@ -936,14 +1063,15 @@
                 <h3 class="font-bold text-white text-lg">${r.name}</h3>
                 <p class="text-xs text-gray-300 mb-1">${r.activity}</p>
                 <div class="flex gap-2 mt-2">
-                    <span class="text-[10px] bg-black/30 px-2 py-1 rounded text-brand-accent">¥${r.budget}</span>
+                    <span class="text-[10px] bg-black/30 px-2 py-1 rounded text-brand-accent">¥${r.budget.toLocaleString()}</span>
                 </div>
             `;
         };
 
         function updateSyncStatus(msg, color) {
             const el = document.getElementById('sync-status');
-            el.innerHTML = `<span class="w-2 h-2 rounded-full bg-${color}-500 mr-1"></span> ${msg}`;
+            el.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-${color}-500"></span>`;
+            el.title = msg;
         }
 
     </script>
