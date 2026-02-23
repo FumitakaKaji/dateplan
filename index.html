@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SmartDatePlans - Couple Shared App</title>
+    <title>デートプラン共有アプリ</title>
     
     <!-- Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Playfair+Display:ital,wght@0,600;1,600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
     
     <!-- Icons: FontAwesome (CDN) -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -29,7 +29,6 @@
                     },
                     fontFamily: {
                         sans: ['"Noto Sans JP"', 'sans-serif'],
-                        serif: ['"Playfair Display"', 'serif'],
                     }
                 }
             }
@@ -67,28 +66,28 @@
             <div class="inline-block p-4 rounded-full bg-brand-primary/20 mb-4 border border-brand-accent/30">
                 <i class="fa-solid fa-heart text-4xl text-brand-accent"></i>
             </div>
-            <h1 class="text-4xl font-serif font-bold text-brand-accent mb-2 tracking-tight">Smart Date Plans</h1>
-            <p class="text-gray-400 text-sm">二人のための特別なデートプラン管理</p>
+            <h1 class="text-3xl font-bold text-brand-accent mb-2 tracking-tight">デートプラン</h1>
+            <p class="text-gray-400 text-sm">パートナーと共有できるデートプランリスト</p>
         </div>
         
         <button id="login-btn" class="w-full max-w-xs bg-white text-gray-900 font-bold py-4 rounded-xl shadow-lg hover:bg-gray-100 transition-all flex items-center justify-center gap-3">
             <i class="fa-brands fa-google text-xl"></i>
             <span>Googleでログイン</span>
         </button>
-        <p class="mt-6 text-xs text-gray-600">Syncs with Firebase Cloud</p>
+        <p class="mt-6 text-xs text-gray-600">クラウドで同期</p>
     </div>
 
     <!-- ================= APP HEADER ================= -->
     <header class="sticky top-0 z-40 bg-gray-900/90 backdrop-blur-md border-b border-gray-800 px-4 py-3 flex justify-between items-center">
         <div class="flex items-center gap-2">
             <i class="fa-solid fa-heart text-brand-accent text-lg"></i>
-            <span class="font-serif font-bold text-lg tracking-tight text-gray-100">SmartDate</span>
+            <span class="font-bold text-lg tracking-tight text-gray-100">DatePlans</span>
         </div>
         
         <div class="flex items-center gap-3">
             <!-- Sync Status -->
             <div id="sync-status" class="text-xs font-mono text-gray-500 flex items-center gap-1.5">
-                <span class="w-2 h-2 rounded-full bg-gray-600"></span> Offline
+                <span class="w-2 h-2 rounded-full bg-gray-600"></span> オフライン
             </div>
             
             <!-- User Menu -->
@@ -108,7 +107,7 @@
             
             <div class="relative z-10">
                 <div class="flex justify-between items-start mb-4">
-                    <span class="bg-brand-accent text-brand-dark text-[10px] font-bold px-2 py-1 rounded-md tracking-wider uppercase">Today's Pick</span>
+                    <span class="bg-brand-accent text-brand-dark text-[10px] font-bold px-2 py-1 rounded-md tracking-wider">今日のピックアップ</span>
                     <button onclick="pickRandom()" class="text-white/60 hover:text-white transition-colors"><i class="fa-solid fa-shuffle"></i></button>
                 </div>
                 <div id="todays-pick-content">
@@ -124,10 +123,10 @@
 
         <!-- Toolbar (Sort & Count) -->
         <div class="flex justify-between items-center mb-4 px-1">
-            <span id="plan-count" class="text-xs font-bold text-gray-500">Loading...</span>
+            <span id="plan-count" class="text-xs font-bold text-gray-500">データを読み込み中...</span>
             <div class="flex gap-2">
                 <button onclick="toggleSort()" id="sort-btn" class="text-xs font-bold text-gray-400 hover:text-brand-accent transition-colors flex items-center gap-1">
-                    <i class="fa-solid fa-arrow-down-short-wide"></i> <span id="sort-label">Budget</span>
+                    <i class="fa-solid fa-arrow-down-short-wide"></i> <span id="sort-label">予算</span>
                 </button>
             </div>
         </div>
@@ -136,7 +135,7 @@
         <div id="plan-list" class="space-y-4 min-h-[50vh]">
             <!-- Injected by JS -->
             <div class="text-center py-20 text-gray-600 animate-pulse">
-                Loading data from cloud...
+                データを読み込み中...
             </div>
         </div>
 
@@ -146,11 +145,11 @@
     <nav class="fixed bottom-0 left-0 right-0 bg-gray-900/95 backdrop-blur-xl border-t border-gray-800 px-6 py-2 flex justify-center items-center gap-16 z-40 pb-safe">
         <button onclick="switchTab('all')" id="nav-all" class="flex flex-col items-center gap-1 p-2 text-brand-accent transition-all">
             <i class="fa-solid fa-house text-xl"></i>
-            <span class="text-[10px] font-bold">Home</span>
+            <span class="text-[10px] font-bold">ホーム</span>
         </button>
         <button onclick="switchTab('favorites')" id="nav-fav" class="flex flex-col items-center gap-1 p-2 text-gray-500 hover:text-gray-300 transition-all">
             <i class="fa-solid fa-heart text-xl"></i>
-            <span class="text-[10px] font-bold">Likes</span>
+            <span class="text-[10px] font-bold">お気に入り</span>
         </button>
     </nav>
 
@@ -159,6 +158,13 @@
         <i class="fa-solid fa-plus"></i>
     </button>
 
+    <!-- Bulk Action Panel (一括削除) -->
+    <div id="bulk-action-panel" class="fixed bottom-20 left-1/2 transform -translate-x-1/2 bg-red-600 text-white px-6 py-3 rounded-full shadow-lg flex items-center gap-4 z-50 transition-all duration-300 translate-y-24 opacity-0 pointer-events-none">
+        <span id="bulk-action-count" class="font-bold text-sm whitespace-nowrap">0件選択中</span>
+        <button onclick="deleteSelectedPlans()" class="bg-white text-red-600 px-3 py-1.5 rounded font-bold text-xs hover:bg-gray-100 transition-colors whitespace-nowrap">一括削除</button>
+        <button onclick="clearSelection()" class="text-white hover:text-red-200"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+
     <!-- ================= MODALS ================= -->
 
     <!-- Editor Modal (Add/Edit) -->
@@ -166,7 +172,7 @@
         <div class="absolute inset-0 bg-black/80 backdrop-blur-sm" onclick="closeModal('editor-modal')"></div>
         <div class="absolute bottom-0 left-0 right-0 bg-gray-800 rounded-t-3xl p-6 modal-enter max-w-md mx-auto h-[90vh] overflow-y-auto border-t border-gray-700">
             <div class="flex justify-between items-center mb-6">
-                <h2 id="editor-title" class="text-xl font-serif font-bold text-gray-100">New Plan</h2>
+                <h2 id="editor-title" class="text-xl font-bold text-gray-100">プランを追加</h2>
                 <button onclick="closeModal('editor-modal')" class="w-8 h-8 rounded-full bg-gray-700 text-gray-400 flex items-center justify-center hover:bg-gray-600"><i class="fa-solid fa-xmark"></i></button>
             </div>
             
@@ -174,36 +180,42 @@
                 <input type="hidden" name="id">
                 
                 <div>
-                    <label class="text-xs font-bold text-gray-500 uppercase tracking-wider">Spot Name</label>
-                    <input type="text" name="name" required class="w-full bg-gray-900 border border-gray-700 rounded-xl px-4 py-3 mt-1 text-gray-200 focus:border-brand-accent focus:ring-1 focus:ring-brand-accent outline-none" placeholder="店名・場所">
+                    <label class="text-xs font-bold text-gray-500 uppercase tracking-wider">店名・場所名</label>
+                    <input type="text" name="name" required class="w-full bg-gray-900 border border-gray-700 rounded-xl px-4 py-3 mt-1 text-gray-200 focus:border-brand-accent focus:ring-1 focus:ring-brand-accent outline-none" placeholder="例：六本木ヒルズ">
                 </div>
                 
                 <div class="grid grid-cols-2 gap-4">
                     <div>
-                        <label class="text-xs font-bold text-gray-500 uppercase tracking-wider">Category</label>
-                        <select name="category" class="w-full bg-gray-900 border border-gray-700 rounded-xl px-4 py-3 mt-1 text-gray-200 focus:border-brand-accent outline-none appearance-none">
-                            <option>夜ごはん</option><option>休日昼</option><option>遠出</option><option>お家</option><option>季節限定</option><option>お泊まり</option>
+                        <label class="text-xs font-bold text-gray-500 uppercase tracking-wider">カテゴリ</label>
+                        <select name="category" id="plan-category-select" class="w-full bg-gray-900 border border-gray-700 rounded-xl px-4 py-3 mt-1 text-gray-200 focus:border-brand-accent outline-none appearance-none">
+                            <!-- JSで動的生成 -->
                         </select>
                     </div>
                     <div>
-                        <label class="text-xs font-bold text-gray-500 uppercase tracking-wider">Budget (2人)</label>
+                        <label class="text-xs font-bold text-gray-500 uppercase tracking-wider">予算 (2人分)</label>
                         <input type="number" name="budget" required class="w-full bg-gray-900 border border-gray-700 rounded-xl px-4 py-3 mt-1 text-gray-200 focus:border-brand-accent outline-none" placeholder="10000">
                     </div>
                 </div>
 
                 <div>
-                    <label class="text-xs font-bold text-gray-500 uppercase tracking-wider">Activity</label>
-                    <input type="text" name="activity" required class="w-full bg-gray-900 border border-gray-700 rounded-xl px-4 py-3 mt-1 text-gray-200 focus:border-brand-accent outline-none" placeholder="何をする？">
+                    <label class="text-xs font-bold text-gray-500 uppercase tracking-wider">何をする？</label>
+                    <input type="text" name="activity" required class="w-full bg-gray-900 border border-gray-700 rounded-xl px-4 py-3 mt-1 text-gray-200 focus:border-brand-accent outline-none" placeholder="例：夜景を見ながらディナー">
                 </div>
 
                 <div>
-                    <label class="text-xs font-bold text-gray-500 uppercase tracking-wider">Why (沼らせポイント)</label>
-                    <textarea name="why" rows="2" class="w-full bg-gray-900 border border-gray-700 rounded-xl px-4 py-3 mt-1 text-gray-200 focus:border-brand-accent outline-none" placeholder="おすすめ理由は？"></textarea>
+                    <label class="text-xs font-bold text-gray-500 uppercase tracking-wider">おすすめポイント</label>
+                    <textarea name="why" rows="2" class="w-full bg-gray-900 border border-gray-700 rounded-xl px-4 py-3 mt-1 text-gray-200 focus:border-brand-accent outline-none" placeholder="例：雰囲気が良くて記念日にぴったり"></textarea>
+                </div>
+
+                <!-- 分割したメモ欄とリンク欄 -->
+                <div>
+                    <label class="text-xs font-bold text-gray-500 uppercase tracking-wider">メモ</label>
+                    <textarea name="memo" id="input-memo" rows="2" class="w-full bg-gray-900 border border-gray-700 rounded-xl px-4 py-3 mt-1 text-gray-200 focus:border-brand-accent outline-none" placeholder="例：予約は早めがおすすめ"></textarea>
                 </div>
 
                 <div>
-                    <label class="text-xs font-bold text-gray-500 uppercase tracking-wider">Memo / Links</label>
-                    <textarea name="memo" rows="2" class="w-full bg-gray-900 border border-gray-700 rounded-xl px-4 py-3 mt-1 text-gray-200 focus:border-brand-accent outline-none" placeholder="メモやURL（改行区切り）"></textarea>
+                    <label class="text-xs font-bold text-gray-500 uppercase tracking-wider">関連リンク (改行で複数URL)</label>
+                    <textarea name="links" id="input-links" rows="2" class="w-full bg-gray-900 border border-gray-700 rounded-xl px-4 py-3 mt-1 text-gray-200 focus:border-brand-accent outline-none font-mono text-xs" placeholder="https://..."></textarea>
                 </div>
 
                 <div class="flex items-center gap-3 p-4 bg-gray-900 rounded-xl border border-gray-700">
@@ -214,7 +226,7 @@
                 </div>
 
                 <button type="submit" class="w-full bg-brand-accent text-brand-dark font-bold py-4 rounded-xl shadow-lg mt-4 active:scale-95 transition-transform">
-                    <i class="fa-solid fa-save mr-2"></i> Save Plan
+                    <i class="fa-solid fa-save mr-2"></i> 保存する
                 </button>
             </form>
         </div>
@@ -223,8 +235,25 @@
     <!-- Settings Modal (Sync & Import) -->
     <div id="settings-modal" class="fixed inset-0 z-50 hidden">
         <div class="absolute inset-0 bg-black/80 backdrop-blur-sm" onclick="closeModal('settings-modal')"></div>
-        <div class="absolute bottom-0 left-0 right-0 bg-gray-800 rounded-t-3xl p-6 modal-enter max-w-md mx-auto border-t border-gray-700">
-            <h2 class="text-xl font-serif font-bold text-gray-100 mb-6">Settings</h2>
+        <div class="absolute bottom-0 left-0 right-0 bg-gray-800 rounded-t-3xl p-6 modal-enter max-w-md mx-auto h-[90vh] overflow-y-auto border-t border-gray-700 pb-10">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-xl font-bold text-gray-100">設定</h2>
+                <button onclick="closeModal('settings-modal')" class="w-8 h-8 rounded-full bg-gray-700 text-gray-400 flex items-center justify-center hover:bg-gray-600"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+
+            <!-- Category Management -->
+            <div class="mb-8">
+                <label class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 block">カテゴリ管理</label>
+                <div class="p-4 bg-gray-900 rounded-xl border border-gray-700">
+                    <div class="flex gap-2 mb-4">
+                        <input type="text" id="new-category-input" class="flex-1 bg-black border border-gray-700 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-600 outline-none focus:border-brand-accent" placeholder="新しいカテゴリ名">
+                        <button onclick="addCategory()" class="bg-gray-700 hover:bg-gray-600 px-4 py-2 rounded-lg text-xs font-bold text-white transition-colors">追加</button>
+                    </div>
+                    <div id="category-list-settings" class="flex flex-wrap gap-2">
+                        <!-- JSで動的生成 -->
+                    </div>
+                </div>
+            </div>
 
             <!-- Shared ID Config -->
             <div class="mb-8">
@@ -272,6 +301,7 @@
   messagingSenderId: "243893644952",
   appId: "1:243893644952:web:2a0953206d782a9965eaed"
 };
+
         // --------------------------------------------------------
 
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
@@ -280,14 +310,17 @@
 
         // Global State
         window.state = {
-            user: null,         // Login User
-            targetUid: null,    // Data Source UID (Self or Partner)
-            data: { plans: [] },// Application Data
+            user: null,
+            targetUid: null,
+            data: { plans: [], categories: [] },
             filter: 'すべて',
             sortBy: 'budget', // 'budget' | 'budget-desc'
             viewMode: 'all',  // 'all' | 'favorites'
-            unsubscribe: null // Firestore listener
+            unsubscribe: null,
+            selectedPlans: new Set() // 一括削除用
         };
+
+        const DEFAULT_CATEGORIES = ['夜ごはん', '休日昼', '遠出', 'お家', '季節限定', 'お泊まり'];
 
         // --- Firebase Init ---
         let app, auth, db;
@@ -313,7 +346,6 @@
                 console.error(error);
                 let errorMessage = `ログインエラー: ${error.message}`;
                 
-                // 承認されていないドメインからのアクセス時のエラーハンドリング
                 if (error.code === 'auth/unauthorized-domain') {
                     errorMessage = "【設定エラー】\nこのサイトのURLがFirebaseの「承認済みドメイン」に登録されていません。\n\nFirebase Consoleを開き、「Authentication」→「Settings（設定）」→「Authorized domains（承認済みドメイン）」に現在のURLを追加してください。";
                 }
@@ -324,7 +356,7 @@
         });
 
         window.handleLogout = async () => {
-            if (window.state.unsubscribe) window.state.unsubscribe(); // Stop listening
+            if (window.state.unsubscribe) window.state.unsubscribe(); 
             await signOut(auth);
             closeModal('settings-modal');
         };
@@ -339,7 +371,6 @@
                 document.getElementById('user-icon-placeholder').classList.add('hidden');
                 document.getElementById('my-uid-display').textContent = user.uid;
                 
-                // Determine Target UID (Load from localStorage if partner set)
                 const savedTarget = localStorage.getItem('smartDate_targetUid');
                 window.state.targetUid = savedTarget || user.uid;
                 
@@ -352,41 +383,47 @@
             } else {
                 // Logged Out
                 authOverlay.classList.remove('opacity-0', 'pointer-events-none');
-                window.state.data = { plans: [] };
+                window.state.data = { plans: [], categories: [] };
                 render();
             }
         });
 
-        // --- Firestore Logic (Cloud Wrapper) ---
+        // --- Firestore Logic ---
         function initFirestoreSync() {
             if (!window.state.user) return;
             
-            updateSyncStatus('Syncing...', 'yellow');
+            updateSyncStatus('同期中...', 'yellow');
             
-            // Unsubscribe previous listener if exists
             if (window.state.unsubscribe) window.state.unsubscribe();
 
-            // Document Path: users/{targetUid}/appData/v1
             const docRef = doc(db, "users", window.state.targetUid, "appData", "v1");
 
             window.state.unsubscribe = onSnapshot(docRef, (docSnap) => {
                 if (docSnap.exists()) {
-                    // JSON parse logic (if stored as string, though Firestore handles object map fine)
-                    // Requirements said "JSON stringify", but Firestore map is better. Let's support object directly.
                     const cloudData = docSnap.data();
-                    window.state.data = cloudData.json ? JSON.parse(cloudData.json) : { plans: [] };
-                    updateSyncStatus('Synced', 'green');
+                    window.state.data = cloudData.json ? JSON.parse(cloudData.json) : { plans: [], categories: [] };
+                    
+                    // カテゴリが存在しない場合はデフォルトを入れる
+                    if (!window.state.data.categories || window.state.data.categories.length === 0) {
+                        window.state.data.categories = [...DEFAULT_CATEGORIES];
+                    }
+                    updateSyncStatus('同期完了', 'green');
                 } else {
                     // No data yet
-                    window.state.data = { plans: [] };
-                    updateSyncStatus('No Data', 'gray');
+                    window.state.data = { plans: [], categories: [...DEFAULT_CATEGORIES] };
+                    updateSyncStatus('データなし', 'gray');
                 }
+                // 存在しないIDが選択状態に残らないようフィルタリング
+                const existingIds = new Set(window.state.data.plans.map(p => p.id));
+                window.state.selectedPlans = new Set([...window.state.selectedPlans].filter(id => existingIds.has(id)));
+                
+                updateBulkActionPanel();
                 render();
             }, (error) => {
                 console.error("Firestore Error:", error);
                 if (error.code === 'permission-denied') {
                      alert("データへのアクセス権がありません。共有設定を確認してください。");
-                     updateSyncStatus('Error', 'red');
+                     updateSyncStatus('エラー', 'red');
                 }
             });
         }
@@ -405,13 +442,14 @@
                 await setDoc(docRef, payload);
             } catch (error) {
                 console.error("Save Error:", error);
-                alert("保存に失敗しました。");
+                // エラーの詳細をアラートで表示（権限不足など）
+                alert(`保存に失敗しました。\nエラー: ${error.message}\nFirebaseのルール設定などが正しいか確認してください。`);
                 updateSyncStatus('エラー', 'red');
             }
         }
 
         // --- App Logic ---
-        
+
         window.importJsonData = async () => {
             const inputEl = document.getElementById('import-json-input');
             const jsonStr = inputEl.value.trim();
@@ -431,15 +469,14 @@
                     
                     // 重複排除と簡易バリデーション
                     const validPlans = newPlans.filter(p => {
-                        if(!p.name) return false; // 名前がないデータは弾く
-                        // IDがない場合は自動付与
+                        if(!p.name) return false; 
                         if (!p.id) p.id = Date.now() + Math.floor(Math.random() * 1000);
                         return !currentIds.has(p.id);
                     });
 
                     window.state.data.plans = [...window.state.data.plans, ...validPlans];
                     await saveDataToCloud();
-                    inputEl.value = ''; // 入力欄をクリア
+                    inputEl.value = ''; 
                     closeModal('settings-modal');
                     alert(`${validPlans.length}件のデータを取り込みました。`);
                 }
@@ -453,6 +490,10 @@
             const form = e.target;
             const formData = new FormData(form);
             
+            // リンクのテキストエリアから改行区切りで配列を作成
+            const linksText = formData.get('links');
+            const linksArray = linksText ? linksText.split('\n').map(l => l.trim()).filter(l => l !== '') : [];
+
             const newPlan = {
                 id: formData.get('id') ? parseInt(formData.get('id')) : Date.now(),
                 name: formData.get('name'),
@@ -461,19 +502,18 @@
                 activity: formData.get('activity'),
                 why: formData.get('why'),
                 memo: formData.get('memo'),
+                links: linksArray,
                 isChoco: form.querySelector('[name=isChoco]').checked,
-                done: false, // Default
-                likes: []    // UIDs
+                done: false,
+                likes: []
             };
 
             const existingIdx = window.state.data.plans.findIndex(p => p.id === newPlan.id);
             if (existingIdx >= 0) {
-                // Update (Keep likes/done status)
                 newPlan.likes = window.state.data.plans[existingIdx].likes;
                 newPlan.done = window.state.data.plans[existingIdx].done;
                 window.state.data.plans[existingIdx] = newPlan;
             } else {
-                // Add
                 window.state.data.plans.unshift(newPlan);
             }
 
@@ -491,7 +531,7 @@
             } else {
                 plan.likes.push(uid);
             }
-            await saveDataToCloud(); // render handled by snapshot
+            await saveDataToCloud(); 
         };
 
         window.toggleDone = async (id) => {
@@ -500,9 +540,72 @@
             await saveDataToCloud();
         };
 
+        // 個別削除
         window.deletePlan = async (id) => {
-            if(confirm('削除しますか？')) {
+            if(confirm('このプランを削除してもよろしいですか？')) {
                 window.state.data.plans = window.state.data.plans.filter(p => p.id !== id);
+                if(window.state.selectedPlans.has(id)) {
+                    window.state.selectedPlans.delete(id);
+                    updateBulkActionPanel();
+                }
+                await saveDataToCloud();
+            }
+        };
+
+        // 一括選択・削除ロジック
+        window.toggleSelection = (id) => {
+            if(window.state.selectedPlans.has(id)) {
+                window.state.selectedPlans.delete(id);
+            } else {
+                window.state.selectedPlans.add(id);
+            }
+            updateBulkActionPanel();
+            renderList(); // チェックボックスの見た目更新
+        };
+
+        window.clearSelection = () => {
+            window.state.selectedPlans.clear();
+            updateBulkActionPanel();
+            renderList();
+        };
+
+        window.deleteSelectedPlans = async () => {
+            if(confirm(`${window.state.selectedPlans.size}件のプランを一括削除しますか？`)) {
+                window.state.data.plans = window.state.data.plans.filter(p => !window.state.selectedPlans.has(p.id));
+                window.state.selectedPlans.clear();
+                updateBulkActionPanel();
+                await saveDataToCloud();
+            }
+        };
+
+        function updateBulkActionPanel() {
+            const panel = document.getElementById('bulk-action-panel');
+            const count = document.getElementById('bulk-action-count');
+            if(window.state.selectedPlans.size > 0) {
+                count.innerText = `${window.state.selectedPlans.size}件選択中`;
+                panel.classList.remove('translate-y-24', 'opacity-0', 'pointer-events-none');
+            } else {
+                panel.classList.add('translate-y-24', 'opacity-0', 'pointer-events-none');
+            }
+        }
+
+        // カテゴリ管理ロジック
+        window.addCategory = async () => {
+            const input = document.getElementById('new-category-input');
+            const val = input.value.trim();
+            if(val && !window.state.data.categories.includes(val)) {
+                window.state.data.categories.push(val);
+                input.value = '';
+                await saveDataToCloud();
+            }
+        };
+
+        window.removeCategory = async (cat) => {
+            if(confirm(`カテゴリ「${cat}」を削除しますか？\n(※すでに登録されているプランのカテゴリはそのまま残ります)`)){
+                window.state.data.categories = window.state.data.categories.filter(c => c !== cat);
+                if(window.state.filter === cat) {
+                    window.state.filter = 'すべて';
+                }
                 await saveDataToCloud();
             }
         };
@@ -511,7 +614,7 @@
         window.copyUid = () => {
             const uid = document.getElementById('my-uid-display').innerText;
             navigator.clipboard.writeText(uid);
-            alert('Copied ID!');
+            alert('IDをコピーしました！');
         };
 
         window.setTargetUid = () => {
@@ -520,22 +623,25 @@
                 window.state.targetUid = input;
                 localStorage.setItem('smartDate_targetUid', input);
                 alert('接続先を変更しました。再同期します。');
-                initFirestoreSync(); // Reload with new ID
+                initFirestoreSync();
                 closeModal('settings-modal');
             }
         };
 
         // --- UI Rendering ---
-        const categories = ['すべて', '夜ごはん', '休日昼', '遠出', 'お家', '季節限定', 'お泊まり'];
 
         function render() {
             renderTabs();
             renderList();
+            renderCategorySettings();
+            renderCategorySelect();
         }
 
         function renderTabs() {
             const container = document.getElementById('category-tabs');
-            container.innerHTML = categories.map(cat => `
+            const cats = ['すべて', ...(window.state.data.categories || [])];
+            
+            container.innerHTML = cats.map(cat => `
                 <button onclick="setFilter('${cat}')" 
                     class="whitespace-nowrap px-4 py-2 rounded-full text-xs font-bold transition-all border ${window.state.filter === cat ? 'bg-brand-primary text-brand-accent border-brand-accent' : 'bg-gray-800 text-gray-400 border-gray-700'}">
                     ${cat}
@@ -543,10 +649,28 @@
             `).join('');
         }
 
+        function renderCategorySettings() {
+            const listEl = document.getElementById('category-list-settings');
+            const cats = window.state.data.categories || [];
+            listEl.innerHTML = cats.map(cat => `
+                <span class="bg-gray-700 text-gray-200 px-3 py-1.5 rounded-md text-xs font-bold flex items-center gap-2 border border-gray-600">
+                    ${cat} 
+                    <button onclick="removeCategory('${cat}')" class="text-gray-400 hover:text-red-400 p-0.5"><i class="fa-solid fa-xmark"></i></button>
+                </span>
+            `).join('');
+        }
+
+        function renderCategorySelect() {
+            const selectEl = document.getElementById('plan-category-select');
+            const cats = window.state.data.categories || [];
+            selectEl.innerHTML = cats.map(cat => `
+                <option value="${cat}">${cat}</option>
+            `).join('');
+        }
+
         function renderList() {
             let list = [...window.state.data.plans];
             
-            // Filter
             if (window.state.filter !== 'すべて') {
                 list = list.filter(p => p.category === window.state.filter);
             }
@@ -554,36 +678,56 @@
                 list = list.filter(p => p.likes && p.likes.includes(window.state.user.uid));
             }
 
-            // Sort
             if (window.state.sortBy === 'budget') list.sort((a,b) => a.budget - b.budget);
             if (window.state.sortBy === 'budget-desc') list.sort((a,b) => b.budget - a.budget);
 
-            // Update Counts
-            document.getElementById('plan-count').textContent = `${list.length} Plans`;
+            document.getElementById('plan-count').textContent = `${list.length} 件のプラン`;
             const container = document.getElementById('plan-list');
             
             if (list.length === 0) {
-                container.innerHTML = `<div class="text-center py-10 text-gray-600"><p>No plans found.</p></div>`;
+                container.innerHTML = `<div class="text-center py-10 text-gray-600"><p>プランがありません。</p></div>`;
                 return;
             }
 
             container.innerHTML = list.map(plan => {
                 const isLiked = plan.likes && plan.likes.includes(window.state.user.uid);
                 const isDone = plan.done;
+                const isSelected = window.state.selectedPlans.has(plan.id);
                 
+                // リンクボタンの描画
+                const linkList = plan.links && plan.links.length > 0 
+                    ? `<div class="mt-3 flex flex-wrap gap-2">
+                        ${plan.links.map(url => `
+                            <a href="${url}" target="_blank" onclick="event.stopPropagation();" class="inline-flex items-center gap-1 bg-gray-700 hover:bg-gray-600 text-gray-300 px-2 py-1.5 rounded-lg text-[10px] transition-colors border border-gray-600">
+                                <i class="fa-solid fa-link text-[10px]"></i> リンクを開く
+                            </a>
+                        `).join('')}
+                       </div>`
+                    : '';
+
                 return `
-                <div class="fade-in bg-gray-800 rounded-2xl overflow-hidden border ${isDone ? 'border-green-800 opacity-80' : 'border-gray-700'} relative group">
+                <div onclick="toggleSelection(${plan.id})" class="fade-in bg-gray-800 rounded-2xl overflow-hidden border ${isDone ? 'border-green-800 opacity-80' : 'border-gray-700'} relative group cursor-pointer transition-all ${isSelected ? 'ring-2 ring-red-500 bg-gray-700' : 'hover:bg-gray-700/50'}">
                     <!-- Image/Color Banner -->
-                    <div class="h-24 ${plan.isChoco ? 'bg-[#3E2723]' : 'bg-gray-700'} relative overflow-hidden">
+                    <div class="h-24 ${plan.isChoco ? 'bg-[#3E2723]' : 'bg-gray-700'} relative overflow-hidden pointer-events-none">
                         ${plan.isChoco ? '<div class="absolute inset-0 opacity-20 bg-[url(\'https://www.transparenttextures.com/patterns/cubes.png\')]"></div>' : ''}
-                        <div class="absolute top-2 left-3 flex gap-2">
+                        
+                        <div class="absolute top-2 left-2 z-10 pointer-events-auto flex gap-2 items-center">
+                            <input type="checkbox" class="w-5 h-5 accent-red-500 rounded cursor-pointer" 
+                                   ${isSelected ? 'checked' : ''} 
+                                   onclick="event.stopPropagation(); toggleSelection(${plan.id})">
+                        </div>
+
+                        <div class="absolute bottom-2 left-3 flex gap-2">
                              <span class="text-[10px] font-bold bg-gray-900/80 text-gray-300 px-2 py-1 rounded backdrop-blur-sm">${plan.category}</span>
-                             ${plan.isChoco ? '<span class="text-[10px] font-bold bg-brand-accent text-brand-dark px-2 py-1 rounded"><i class="fa-solid fa-mug-hot"></i> CHOCO</span>' : ''}
+                             ${plan.isChoco ? '<span class="text-[10px] font-bold bg-brand-accent text-brand-dark px-2 py-1 rounded"><i class="fa-solid fa-mug-hot"></i> チョコ</span>' : ''}
                         </div>
-                        <div class="absolute right-3 top-2 flex gap-2">
-                             <button onclick="openEditor(${plan.id})" class="w-7 h-7 rounded-full bg-black/40 text-white hover:bg-brand-accent hover:text-brand-dark flex items-center justify-center transition-colors"><i class="fa-solid fa-pencil text-xs"></i></button>
+
+                        <div class="absolute right-2 top-2 flex gap-1.5 pointer-events-auto">
+                             <button onclick="event.stopPropagation(); openEditor(${plan.id})" class="w-8 h-8 rounded-full bg-black/50 text-white hover:bg-brand-accent hover:text-brand-dark flex items-center justify-center transition-colors backdrop-blur"><i class="fa-solid fa-pencil text-xs"></i></button>
+                             <button onclick="event.stopPropagation(); deletePlan(${plan.id})" class="w-8 h-8 rounded-full bg-black/50 text-white hover:bg-red-500 flex items-center justify-center transition-colors backdrop-blur"><i class="fa-solid fa-trash text-xs"></i></button>
                         </div>
-                        ${isDone ? '<div class="absolute inset-0 bg-black/60 flex items-center justify-center"><span class="text-green-400 font-bold border-2 border-green-400 px-3 py-1 rounded transform -rotate-12 text-sm">COMPLETE</span></div>' : ''}
+
+                        ${isDone ? '<div class="absolute inset-0 bg-black/60 flex items-center justify-center"><span class="text-green-400 font-bold border-2 border-green-400 px-3 py-1 rounded transform -rotate-12 text-sm">行った済</span></div>' : ''}
                     </div>
 
                     <div class="p-4">
@@ -598,15 +742,16 @@
 
                         <div class="bg-gray-900/50 p-3 rounded-lg border border-gray-700 mb-3">
                             <p class="text-xs text-gray-300"><i class="fa-solid fa-quote-left text-gray-600 mr-1"></i> ${plan.why}</p>
-                            ${plan.memo ? `<div class="mt-2 pt-2 border-t border-gray-700 text-[10px] text-gray-500 font-mono">${plan.memo}</div>` : ''}
+                            ${plan.memo ? `<div class="mt-2 pt-2 border-t border-gray-700 text-[10px] text-gray-500 font-mono"><span class="font-bold text-gray-400 block mb-1">MEMO</span>${plan.memo.replace(/\n/g, '<br>')}</div>` : ''}
+                            ${linkList}
                         </div>
 
                         <div class="flex items-center justify-between mt-2">
-                            <button onclick="toggleDone(${plan.id})" class="text-xs font-bold ${isDone ? 'text-green-500' : 'text-gray-500 hover:text-gray-300'} flex items-center gap-1 px-2 py-1 rounded hover:bg-gray-700/50 transition-colors">
-                                <i class="fa-regular fa-circle-check"></i> ${isDone ? 'Done' : 'Mark Done'}
+                            <button onclick="event.stopPropagation(); toggleDone(${plan.id})" class="text-xs font-bold ${isDone ? 'text-green-500' : 'text-gray-500 hover:text-gray-300'} flex items-center gap-1 px-3 py-1.5 rounded-lg hover:bg-gray-700 transition-colors">
+                                <i class="fa-regular fa-circle-check"></i> ${isDone ? '行った済' : '行った！'}
                             </button>
 
-                            <button onclick="toggleLike(${plan.id})" class="text-xl transition-transform active:scale-125 ${isLiked ? 'text-red-500 icon-pop' : 'text-gray-600 hover:text-gray-400'}">
+                            <button onclick="event.stopPropagation(); toggleLike(${plan.id})" class="text-xl transition-transform active:scale-125 ${isLiked ? 'text-red-500 icon-pop' : 'text-gray-600 hover:text-gray-400'} p-2">
                                 <i class="${isLiked ? 'fa-solid' : 'fa-regular'} fa-heart"></i>
                             </button>
                         </div>
@@ -626,14 +771,14 @@
         };
         window.toggleSort = () => { 
             window.state.sortBy = window.state.sortBy === 'budget' ? 'budget-desc' : 'budget';
-            document.getElementById('sort-label').textContent = window.state.sortBy === 'budget' ? 'Budget Low' : 'Budget High';
+            document.getElementById('sort-label').textContent = window.state.sortBy === 'budget' ? '安い順' : '高い順';
             render();
         };
 
         window.openEditor = (id = null) => {
             const form = document.getElementById('plan-form');
             form.reset();
-            document.getElementById('editor-title').textContent = id ? 'Edit Plan' : 'New Plan';
+            document.getElementById('editor-title').textContent = id ? 'プランを編集' : 'プランを追加';
             
             if (id) {
                 const plan = window.state.data.plans.find(p => p.id === id);
@@ -644,7 +789,11 @@
                     form.querySelector('[name=budget]').value = plan.budget;
                     form.querySelector('[name=activity]').value = plan.activity;
                     form.querySelector('[name=why]').value = plan.why;
-                    form.querySelector('[name=memo]').value = plan.memo || '';
+                    
+                    // 分割したメモとリンクをセット
+                    document.getElementById('input-memo').value = plan.memo || '';
+                    document.getElementById('input-links').value = (plan.links || []).join('\n');
+                    
                     form.querySelector('[name=isChoco]').checked = plan.isChoco;
                 }
             } else {
@@ -672,7 +821,6 @@
 
         function updateSyncStatus(msg, color) {
             const el = document.getElementById('sync-status');
-            const dot = el.querySelector('span');
             el.innerHTML = `<span class="w-2 h-2 rounded-full bg-${color}-500 mr-1"></span> ${msg}`;
         }
 
