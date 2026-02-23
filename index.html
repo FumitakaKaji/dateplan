@@ -228,7 +228,7 @@
 
             <!-- Shared ID Config -->
             <div class="mb-8">
-                <label class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 block">Sync with Partner</label>
+                <label class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 block">パートナーと同期</label>
                 <div class="p-4 bg-gray-900 rounded-xl border border-gray-700">
                     <p class="text-xs text-gray-400 mb-2">あなたのID (これを相手に伝えてください):</p>
                     <div class="flex items-center gap-2 mb-4">
@@ -238,24 +238,25 @@
 
                     <p class="text-xs text-gray-400 mb-2">相手のIDを入力して同期:</p>
                     <div class="flex gap-2">
-                        <input type="text" id="target-uid-input" class="flex-1 bg-black border border-gray-700 rounded-lg px-3 py-2 text-sm text-white font-mono placeholder-gray-600" placeholder="Partner's UID">
-                        <button onclick="setTargetUid()" class="bg-gray-700 hover:bg-gray-600 px-4 py-2 rounded-lg text-xs font-bold text-white transition-colors">Connect</button>
+                        <input type="text" id="target-uid-input" class="flex-1 bg-black border border-gray-700 rounded-lg px-3 py-2 text-sm text-white font-mono placeholder-gray-600 outline-none focus:border-brand-accent" placeholder="Partner's UID">
+                        <button onclick="setTargetUid()" class="bg-gray-700 hover:bg-gray-600 px-4 py-2 rounded-lg text-xs font-bold text-white transition-colors">接続</button>
                     </div>
-                    <p id="connection-status" class="text-[10px] text-brand-accent mt-2 hidden"><i class="fa-solid fa-link"></i> Connected to partner</p>
+                    <p id="connection-status" class="text-[10px] text-brand-accent mt-2 hidden"><i class="fa-solid fa-link"></i> パートナーと接続済み</p>
                 </div>
             </div>
 
             <!-- Import Data -->
             <div class="mb-8">
-                 <label class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 block">Data Management</label>
-                 <button onclick="importInitialData()" class="w-full bg-gray-700 text-gray-300 py-3 rounded-xl hover:bg-gray-600 text-sm font-bold flex items-center justify-center gap-2">
-                    <i class="fa-solid fa-file-import"></i> 初期データを取り込む
+                 <label class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 block">データの一括登録</label>
+                 <p class="text-[10px] text-gray-400 mb-2">AIで生成したJSONデータを貼り付けて追加できます。</p>
+                 <textarea id="import-json-input" rows="4" class="w-full bg-black border border-gray-700 rounded-lg px-3 py-2 text-xs text-white font-mono placeholder-gray-600 outline-none focus:border-brand-accent mb-2" placeholder='[{"name": "...", "category": "夜ごはん", "budget": 10000}]'></textarea>
+                 <button onclick="importJsonData()" class="w-full bg-gray-700 text-gray-300 py-3 rounded-xl hover:bg-gray-600 text-sm font-bold flex items-center justify-center gap-2 transition-colors">
+                    <i class="fa-solid fa-file-import"></i> 貼り付けたデータを取り込む
                  </button>
-                 <p class="text-[10px] text-gray-500 mt-2 text-center">※現在のデータに追加されます</p>
             </div>
 
             <button onclick="handleLogout()" class="w-full border border-red-900/50 text-red-400 py-3 rounded-xl hover:bg-red-900/20 text-sm font-bold mt-4">
-                <i class="fa-solid fa-right-from-bracket mr-2"></i> Sign Out
+                <i class="fa-solid fa-right-from-bracket mr-2"></i> ログアウト
             </button>
         </div>
     </div>
@@ -310,7 +311,14 @@
                 await signInWithPopup(auth, provider);
             } catch (error) {
                 console.error(error);
-                alert(`ログインエラー: ${error.message}`);
+                let errorMessage = `ログインエラー: ${error.message}`;
+                
+                // 承認されていないドメインからのアクセス時のエラーハンドリング
+                if (error.code === 'auth/unauthorized-domain') {
+                    errorMessage = "【設定エラー】\nこのサイトのURLがFirebaseの「承認済みドメイン」に登録されていません。\n\nFirebase Consoleを開き、「Authentication」→「Settings（設定）」→「Authorized domains（承認済みドメイン）」に現在のURLを追加してください。";
+                }
+                
+                alert(errorMessage);
                 loginBtn.innerHTML = '<i class="fa-brands fa-google text-xl"></i><span>Googleでログイン</span>';
             }
         });
@@ -385,45 +393,58 @@
 
         async function saveDataToCloud() {
             if (!window.state.user) return;
-            updateSyncStatus('Saving...', 'yellow');
+            updateSyncStatus('保存中...', 'yellow');
             
             try {
                 const docRef = doc(db, "users", window.state.targetUid, "appData", "v1");
-                // Save entire state as one JSON string (Cloud Wrapper Pattern)
                 const payload = {
                     json: JSON.stringify(window.state.data),
                     updatedAt: new Date(),
                     updatedBy: window.state.user.uid
                 };
                 await setDoc(docRef, payload);
-                // onSnapshot will handle the UI update "Synced"
             } catch (error) {
                 console.error("Save Error:", error);
                 alert("保存に失敗しました。");
-                updateSyncStatus('Error', 'red');
+                updateSyncStatus('エラー', 'red');
             }
         }
 
         // --- App Logic ---
         
-        // Initial Data (from your request)
-        const INITIAL_DATA = [
-            { id: 1, name: "人形町「焼鳥 おが和」", activity: "老舗の焼鳥重", budget: 10000, why: "予約困難な名店。連れて行くだけで「食通」認定。", category: "夜ごはん", isChoco: false },
-            { id: 2, name: "日本橋「teal」", activity: "元トップショコラティエのアイス＆チョコ", budget: 3000, why: "渋沢栄一邸宅跡地。チョコ好きなら絶対に唸る。", category: "夜ごはん", isChoco: true },
-            { id: 3, name: "押上「プラネタリウム天空」", activity: "三日月シートで星を見る", budget: 5000, why: "限定3席のプレミアムシート。距離感ゼロ。", category: "休日昼", isChoco: false },
-            { id: 4, name: "蔵前「ダンデライオン」", activity: "工場カフェでスモア", budget: 3000, why: "チョコ好きの聖地。製造工程を見ながら摂取。", category: "休日昼", isChoco: true }
-        ];
+        window.importJsonData = async () => {
+            const inputEl = document.getElementById('import-json-input');
+            const jsonStr = inputEl.value.trim();
+            if (!jsonStr) {
+                alert("JSONデータを貼り付けてください。");
+                return;
+            }
 
-        window.importInitialData = async () => {
-            if(confirm('初期データを取り込みますか？(既存データに追加されます)')) {
-                // Avoid duplicates by simple ID check or just concat
-                const currentIds = new Set(window.state.data.plans.map(p => p.id));
-                const newPlans = INITIAL_DATA.filter(p => !currentIds.has(p.id));
-                
-                window.state.data.plans = [...window.state.data.plans, ...newPlans];
-                await saveDataToCloud();
-                closeModal('settings-modal');
-                alert(`${newPlans.length}件のデータを取り込みました。`);
+            try {
+                const newPlans = JSON.parse(jsonStr);
+                if (!Array.isArray(newPlans)) {
+                    throw new Error("データは配列（[ ]）で囲まれている必要があります。");
+                }
+
+                if(confirm(`${newPlans.length}件のデータを取り込みますか？(既存のデータに追加されます)`)) {
+                    const currentIds = new Set(window.state.data.plans.map(p => p.id));
+                    
+                    // 重複排除と簡易バリデーション
+                    const validPlans = newPlans.filter(p => {
+                        if(!p.name) return false; // 名前がないデータは弾く
+                        // IDがない場合は自動付与
+                        if (!p.id) p.id = Date.now() + Math.floor(Math.random() * 1000);
+                        return !currentIds.has(p.id);
+                    });
+
+                    window.state.data.plans = [...window.state.data.plans, ...validPlans];
+                    await saveDataToCloud();
+                    inputEl.value = ''; // 入力欄をクリア
+                    closeModal('settings-modal');
+                    alert(`${validPlans.length}件のデータを取り込みました。`);
+                }
+            } catch (e) {
+                alert(`JSONの形式が正しくありません。\nエラー詳細: ${e.message}`);
             }
         };
 
