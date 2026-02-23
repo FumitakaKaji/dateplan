@@ -344,23 +344,24 @@
   messagingSenderId: "243893644952",
   appId: "1:243893644952:web:2a0953206d782a9965eaed"
 };
+
         // --------------------------------------------------------
 
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
-        import { getAuth, signInWithRedirect, getRedirectResult, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
+        import { getAuth, signInWithPopup, signInWithRedirect, getRedirectResult, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
         import { getFirestore, doc, getDoc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
 
         // Global State
         window.state = {
             user: null,
             targetUid: null,
-            data: { plans: [], categories: [], users: {} }, // users情報を追加
+            data: { plans: [], categories: [], users: {} },
             filter: 'すべて',
             sortBy: 'budget', // 'budget' | 'budget-desc'
             viewMode: 'all',  // 'all' | 'favorites' | 'done'
-            searchQuery: '',  // 検索クエリ
+            searchQuery: '',
             unsubscribe: null,
-            selectedPlans: new Set()
+            selectedPlans: new Set() 
         };
 
         const DEFAULT_CATEGORIES = ['夜ごはん', '休日昼', '遠出', 'お家', '季節限定', 'お泊まり'];
@@ -376,32 +377,47 @@
             alert("Firebase設定が正しくありません。HTMLソースコード内のfirebaseConfigを編集してください。");
         }
 
-        // --- Auth Logic ---
+        // --- Auth Logic (Hybrid: Popup -> Redirect on blocked) ---
         const provider = new GoogleAuthProvider();
         const loginBtn = document.getElementById('login-btn');
         const authOverlay = document.getElementById('auth-overlay');
 
-        // ★ リダイレクト方式でのログインに変更（LINE内ブラウザ対策）
         loginBtn.addEventListener('click', async () => {
             try {
                 loginBtn.innerHTML = '<div class="loader"></div>';
-                await signInWithRedirect(auth, provider);
+                // 1. Chrome等で安定する「ポップアップ方式」をメインで試行
+                await signInWithPopup(auth, provider);
             } catch (error) {
-                console.error(error);
-                alert(`ログインエラー: ${error.message}`);
-                loginBtn.innerHTML = '<i class="fa-brands fa-google text-xl"></i><span>Googleでログイン</span>';
+                console.error("Popup Auth Error:", error);
+                
+                // 2. LINE内ブラウザ等でポップアップがブロックされた場合のみ「リダイレクト方式」に切り替え
+                if (error.code === 'auth/popup-blocked') {
+                    console.log("ポップアップがブロックされました。リダイレクト方式に切り替えます。");
+                    try {
+                        await signInWithRedirect(auth, provider);
+                    } catch (redirectError) {
+                        alert(`リダイレクト準備エラー: ${redirectError.message}`);
+                        loginBtn.innerHTML = '<i class="fa-brands fa-google text-xl"></i><span>Googleでログイン</span>';
+                    }
+                } else if (error.code === 'auth/unauthorized-domain') {
+                    alert("【設定エラー】\nこのサイトのURLがFirebaseの「承認済みドメイン」に登録されていません。\nFirebase Consoleで設定を確認してください。");
+                    loginBtn.innerHTML = '<i class="fa-brands fa-google text-xl"></i><span>Googleでログイン</span>';
+                } else if (error.code !== 'auth/popup-closed-by-user' && error.code !== 'auth/cancelled-popup-request') {
+                    alert(`ログインエラー: ${error.message}\n(Chrome等のブラウザで開き直すとうまくいく場合があります)`);
+                    loginBtn.innerHTML = '<i class="fa-brands fa-google text-xl"></i><span>Googleでログイン</span>';
+                } else {
+                    // ユーザーが自ら閉じた場合は元に戻すだけ
+                    loginBtn.innerHTML = '<i class="fa-brands fa-google text-xl"></i><span>Googleでログイン</span>';
+                }
             }
         });
 
-        // リダイレクトから戻ってきたときのエラーハンドリング
+        // リダイレクト方式から戻ってきた場合のエラーキャッチ
         getRedirectResult(auth).catch((error) => {
-            console.error("Redirect Auth Error:", error);
-            let errorMessage = `ログインエラー: ${error.message}`;
+            console.error("Redirect Result Error:", error);
             if (error.code === 'auth/unauthorized-domain') {
-                errorMessage = "【設定エラー】\nこのサイトのURLがFirebaseの「承認済みドメイン」に登録されていません。\nFirebase Consoleで設定を確認してください。";
+                alert("【設定エラー】\nこのサイトのURLがFirebaseの「承認済みドメイン」に登録されていません。");
             }
-            alert(errorMessage);
-            loginBtn.innerHTML = '<i class="fa-brands fa-google text-xl"></i><span>Googleでログイン</span>';
         });
 
         window.handleLogout = async () => {
@@ -413,10 +429,8 @@
         onAuthStateChanged(auth, (user) => {
             window.state.user = user;
             if (user) {
-                // Logged In
                 authOverlay.classList.add('opacity-0', 'pointer-events-none');
                 
-                // 設定画面用プロフィール
                 document.getElementById('settings-avatar').src = user.photoURL;
                 document.getElementById('settings-name').textContent = user.displayName;
                 document.getElementById('settings-uid').textContent = user.uid;
@@ -433,7 +447,6 @@
 
                 initFirestoreSync();
             } else {
-                // Logged Out
                 authOverlay.classList.remove('opacity-0', 'pointer-events-none');
                 window.state.data = { plans: [], categories: [], users: {} };
                 render();
@@ -462,12 +475,10 @@
 
                     updateSyncStatus('同期完了', 'green');
                 } else {
-                    // No data yet
                     window.state.data = { plans: [], categories: [...DEFAULT_CATEGORIES], users: {} };
                     updateSyncStatus('データなし', 'gray');
                 }
                 
-                // IDフィルタリング
                 const existingIds = new Set(window.state.data.plans.map(p => p.id));
                 window.state.selectedPlans = new Set([...window.state.selectedPlans].filter(id => existingIds.has(id)));
                 
@@ -487,7 +498,6 @@
             updateSyncStatus('保存中...', 'yellow');
             
             try {
-                // ★ 自分のプロフィール情報をデータにマージ（アイコン表示用）
                 if (!window.state.data.users) window.state.data.users = {};
                 window.state.data.users[window.state.user.uid] = {
                     photoURL: window.state.user.photoURL,
@@ -510,7 +520,6 @@
 
         // --- App Logic ---
 
-        // 検索ハンドラー
         window.handleSearch = (val) => {
             window.state.searchQuery = val.trim().toLowerCase();
             document.getElementById('search-clear-btn').classList.toggle('hidden', window.state.searchQuery === '');
@@ -522,18 +531,15 @@
             window.handleSearch('');
         };
 
-        // シェア機能
         window.sharePlan = async (id) => {
             const plan = window.state.data.plans.find(p => p.id === id);
             if (!plan) return;
 
-            // シェア用テキストの組み立て
             let text = `ここどう？🥂\n【${plan.name}】\n💰 予算: 約¥${plan.budget.toLocaleString()}\n\n💬 ${plan.activity}\n${plan.why}\n`;
             if (plan.links && plan.links.length > 0) {
                 text += `\n🔗 ${plan.links[0]}`;
             }
 
-            // Web Share API が使えるスマホ等の場合
             if (navigator.share) {
                 try {
                     await navigator.share({
@@ -544,7 +550,6 @@
                     console.log('Share canceled', err);
                 }
             } else {
-                // 使えないPCブラウザ等はクリップボードにコピー
                 try {
                     await navigator.clipboard.writeText(text);
                     alert("プランの詳細をクリップボードにコピーしました！\nLINE等に貼り付けて相手に送信できます。");
@@ -810,7 +815,6 @@
             renderCategorySelect();
         }
 
-        // ヘッダーに繋がっているユーザーのアイコンを表示
         function renderHeaderUsers() {
             const container = document.getElementById('connected-users');
             if (!window.state.data.users) {
@@ -862,17 +866,14 @@
         function renderList() {
             let list = [...window.state.data.plans];
             
-            // カテゴリフィルタ
             if (window.state.filter !== 'すべて') {
                 list = list.filter(p => p.category === window.state.filter);
             }
-            // タブフィルタ
             if (window.state.viewMode === 'favorites') {
                 list = list.filter(p => p.likes && p.likes.includes(window.state.user.uid));
             } else if (window.state.viewMode === 'done') {
                 list = list.filter(p => p.done);
             }
-            // 検索フィルタ
             if (window.state.searchQuery) {
                 const q = window.state.searchQuery;
                 list = list.filter(p => 
@@ -883,7 +884,6 @@
                 );
             }
 
-            // ソート
             if (window.state.sortBy === 'budget') list.sort((a,b) => a.budget - b.budget);
             if (window.state.sortBy === 'budget-desc') list.sort((a,b) => b.budget - a.budget);
 
@@ -921,7 +921,6 @@
                 const isDone = plan.done;
                 const isSelected = window.state.selectedPlans.has(plan.id);
                 
-                // リンクボタンの描画
                 const linkList = plan.links && plan.links.length > 0 
                     ? `<div class="mt-3 flex flex-wrap gap-2">
                         ${plan.links.map(url => `
@@ -932,7 +931,6 @@
                        </div>`
                     : '';
 
-                // ★ いいねしたユーザーのアイコン群を生成
                 const likedUsersHtml = plan.likes && plan.likes.length > 0 ? 
                     `<div class="flex -space-x-1.5 mr-2">
                         ${plan.likes.map(uid => {
@@ -989,15 +987,12 @@
                             </button>
 
                             <div class="flex items-center">
-                                <!-- シェアボタン -->
                                 <button onclick="event.stopPropagation(); sharePlan(${plan.id})" class="text-gray-500 hover:text-gray-300 transition-colors p-2 mr-2">
                                     <i class="fa-solid fa-arrow-up-from-bracket"></i>
                                 </button>
                                 
-                                <!-- いいねしたユーザー群 -->
                                 ${likedUsersHtml}
                                 
-                                <!-- いいねボタン -->
                                 <button onclick="event.stopPropagation(); toggleLike(${plan.id})" class="text-xl transition-transform active:scale-125 ${isLiked ? 'text-red-500 icon-pop' : 'text-gray-600 hover:text-gray-400'} p-1">
                                     <i class="${isLiked ? 'fa-solid' : 'fa-regular'} fa-heart"></i>
                                 </button>
